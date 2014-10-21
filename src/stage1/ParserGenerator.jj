@@ -1,0 +1,119 @@
+/**
+ * JavaCC template file created by SF JavaCC plugin 1.5.17+ wizard for JavaCC 1.5.0+
+ */options{  JDK_VERSION = "1.5";}PARSER_BEGIN(Parser)package stage1;
+
+public class Parser{  public static void main(String args []) throws ParseException  {    Parser parser;
+
+    if (args.length == 1) {
+      try {        parser = new Parser(new java.io.FileInputStream(args[0]));        } catch (java.io.FileNotFoundException e) {
+        System.out.println("File "+args[0]+ " not found," +
+            " reading from terminal instead");
+        parser = new Parser(System.in);      }    } else {
+      parser = new Parser(System.in);    }  }
+}PARSER_END(Parser)SKIP :  /* Whitespace */{  " "| "\r"| "\t"| "\n"
+| <"//"(~["\n","\r"])*("\n"|"\r"|"\n\r")>   // Single Line Comment
+| <"/*">: CMNT_BODY                         // Multi Line Comment}
+
+<CMNT_BODY>
+SKIP:
+{
+  <"*/">: DEFAULT
+| <~[]>}
+
+
+TOKEN : {
+  /* Keywords */
+  < BREAK : "break">
+| < CLASS : "class">
+| < CONTINUE : "continue">
+| < ELSE : "else">
+| < EXTENDS : "extends">
+| < IF : "if">
+| < NEW : "new">
+| < PRIVATE : "private">
+| < PROTECTED : "protected">
+| < PUBLIC : "public">
+| < RETURN : "return">
+| < STATIC : "static">
+| < SUPER : "super">
+| < THIS : "this">
+| < WHILE : "while">
+  /* Forbidden Keywords from JAVA */
+| < ABSTRACT : "abstract">
+| < BYTE : "byte">
+| < CASE : "case">
+| < CATCH : "catch">
+| < CONST : "const">
+| < DEFLT : "default">
+| < DO : "do">
+| < DOUBLE : "double">
+| < FINAL : "final">
+| < FINALLY : "finally">
+| < FOR : "for">
+| < IMPLEMENTS : "implements">
+| < IMPORT : "import">
+| < INSTANCEOF : "instanceof">
+| < INTERFACE : "interface">
+| < LONG : "long">
+| < NATIVE : "native">
+| < GOTO : "goto">
+| < PACKAGE : "package">
+| < SHORT : "short">
+| < SWITCH : "switch">
+| < SYNCHRONIZED : "synchronized">
+| < THROW : "throw">
+| < THROWS : "throws">
+| < TRANSIENT : "transient">
+| < TRY : "try">
+| < VOLATILE : "volatile">
+  /* Reserved for possible future extension */
+| < BYVALUE : "byvalue">
+| < CAST : "cast">
+| < FUTURE : "future">
+| < GENERIC : "generic">
+| < INNER : "inner">
+| < NONE : "none">
+| < OPERATOR : "operator">
+| < OUTER : "outer">
+| < REST : "rest">
+| < VAR : "var">
+  /* Literals */
+| < INTEGER: "0"|(["1"-"9"](["0"-"9"])*)>
+| < TRUE: "true" >
+| < FALSE: "false" >
+// TODO verify character definition
+| < CHAR: "'"(~["'", "\\"])|("\\"["a"-"z", "A"-"Z", "0"-"9"])|(" ")"'">
+| < STRING: "\""((~["\"","\n","\r"])|("\\\""))*"\"">
+| < NULL: "null">
+  /* Punctuation */
+| < LP: "(" >
+| < RP: ")" >
+| < LCB: "{" >
+| < RCB: "}" >
+| < LSB: "[" >
+| < RSB: "]" >
+| < SCOLON: ";" >
+| < COMMA: "," >
+| < DOT: "." >
+  /* Operators */
+| < ASSIGN: "=" >
+| < GREATER: " >" >
+| < LESSER: "<" >
+| < NOT: "!" >
+| < EQUAL: "==" >
+| < GREATEREQ: ">=" >
+| < LESSEREQ: "<=" >
+| < NOTEQUAL: "!=" >
+| < PLUS : "+" >
+| < MINUS : "-" >
+| < MULTIPLY : "*" >
+| < DIVIDE : "/" >
+| < AND: "&&">
+| < OR: "||">
+| < MODULO: "%">
+  /* Identifiers */
+| < #Let : ["a"-"z", "A"-"Z"]>
+| < #Dig : ["0"-"9"]>
+| < ID: ("$"|"_"|<Let>)("$"|"_"|<Let>|<Dig>)*>
+}
+
