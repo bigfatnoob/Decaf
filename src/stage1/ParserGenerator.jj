@@ -120,7 +120,6 @@ TOKEN : {
 | < #Dig : ["0"-"9"]>
 | < ID: ("$"|"_"|<Let>)("$"|"_"|<Let>|<Dig>)*>
 | < EMPTY : ""> : MATCH_NON_EMPTY
-
 }
 
 < MATCH_NON_EMPTY>
@@ -222,7 +221,78 @@ void Statement():{}
   <SCOLON> | Type() VarDeclaratorList() <SCOLON> | <IF> <LP> Expression() <RP> Statement() | <IF> <LP> Expression() <RP> Statement() <ELSE> Statement() | Expression() <SCOLON> | <WHILE> <LP> Expression() <RP> Statement() | <RETURN> (Expression())? <SCOLON> | <CONTINUE> <SCOLON> | <BREAK> <SCOLON> | Block()
 }
 
-void Expression():{}
+//Mathematical expression productions start here
+void Expression():{}{
+  St() <ASSIGN> Expression()
+| St() }
+
+void St():{}{
+  L() St2()}
+
+vois St2():{}{
+  <OR> L() St2()
+  | <EMPTY>}
+
+void L():{}{
+  M() L2()}
+
+void L2():{}{
+  <AND> M() L2()
+| <EMPTY>}
+
+void M():{}
+{
+  N() M2()
+}
+
+void M2():{}
+{
+  <EQUAL> N() M2()
+| <NOTEQUAL> N() M2()
+| <EMPTY>
+}
+
+void N():{}
+{
+  P() <LESSER> P()
+| P() <GREATER> P()
+| P() <LESSEREQ> P()
+| P() <GREATEREQ> P()
+| P()
+}
+
+void P():{}
+{
+  Q() P2()
+}
+
+void P2():{}
+{
+  <PLUS> Q() P2()
+| <MINUS> Q() P2()
+| <EMPTY>
+}
+
+void Q():{}
+{
+  R() Q2()
+}
+
+void Q2():{}
+{
+  <MULTIPLY> R() Q2()
+| <DIVIDE> R() Q2()
+| <MODULO> R() Q2()
+| <EMPTY>
+}
+
+void R():{}
+{
+  UnaryOp() Expression()
+| Primary()
+}
+
+/*void Expression():{}
 {
   UnaryOp() Expression() Expression2() | Primary() Expression2()
 }
@@ -233,7 +303,7 @@ void Expression2():{}{
 void BinaryOp():{}
 {
   <ASSIGN> | <OR> | <AND> | <EQUAL> | <NOTEQUAL> | <LESSER> | <GREATER> | <LESSEREQ> | <GREATEREQ> | <PLUS> | <MINUS> | <MULTIPLY> | <DIVIDE> | <MODULO> 
-}
+}*/
 
 void UnaryOp():{}
 {
