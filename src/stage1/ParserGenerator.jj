@@ -9,7 +9,8 @@ public class Parser{  public static void main(String args []) throws ParseExce
         System.out.println("File "+args[0]+ " not found," +
             " reading from terminal instead");
         parser = new Parser(System.in);      }    } else {
-      parser = new Parser(System.in);    }  }
+      parser = new Parser(System.in);    }
+    parser.Start();  }
 }PARSER_END(Parser)SKIP :  /* Whitespace */{  " "| "\r"| "\t"| "\n"
 | <"//"(~["\n","\r"])*("\n"|"\r"|"\n\r")>   // Single Line Comment
 | <"/*">: CMNT_BODY                         // Multi Line Comment}
@@ -38,6 +39,9 @@ TOKEN : {
 | < SUPER : "super">
 | < THIS : "this">
 | < WHILE : "while">
+| < BOOLEAN : "boolean">
+| < CHAR : "char" >
+| < VOID : "void" >
   /* Forbidden Keywords from JAVA */
 | < ABSTRACT : "abstract">
 | < BYTE : "byte">
@@ -82,8 +86,8 @@ TOKEN : {
 | < TRUE: "true" >
 | < FALSE: "false" >
 // TODO verify character definition
-| < CHAR: "'"(~["'", "\\"])|("\\"["a"-"z", "A"-"Z", "0"-"9"])|(" ")"'">
-| < STRING: "\""((~["\"","\n","\r"])|("\\\""))*"\"">
+| < CHARLITERAL: "'"(~["'", "\\"])|("\\"["a"-"z", "A"-"Z", "0"-"9"])|(" ")"'">
+| < STRINGLITERAL: "\""((~["\"","\n","\r"])|("\\\""))*"\"">
 | < NULL: "null">
   /* Punctuation */
 | < LP: "(" >
@@ -115,5 +119,182 @@ TOKEN : {
 | < #Let : ["a"-"z", "A"-"Z"]>
 | < #Dig : ["0"-"9"]>
 | < ID: ("$"|"_"|<Let>)("$"|"_"|<Let>|<Dig>)*>
+| < EMPTY : ""> : MATCH_NON_EMPTY
+
 }
 
+< MATCH_NON_EMPTY>
+TOKEN:{
+  <NON_EMPTY : ~[]>}
+
+void Start() : {}
+{
+  (Class())+ <EOF>}
+
+void Class():{}
+{
+  <CLASS> <ID> (Super())? <LCB> (Member())* <RCB>
+}
+
+void Super():{}
+{
+  <EXTENDS> <ID>
+}
+
+void Member():{}
+{
+  Field() | Method() | Ctor()
+}
+
+void Field():{}
+{
+  (Modifier())* Type() VarDeclaratorList()
+}
+
+void Method():{}
+{
+  (Modifier())* Type() <ID> FormalArgs() Block()
+}
+
+void Ctor():{}
+{
+  (Modifier())* <ID> FormalArgs() Block()
+}
+
+void Modifier():{}
+{
+  <STATIC>| <PUBLIC>| <PRIVATE>| <PROTECTED>
+}
+
+void FormalArgs():{}
+{
+  (FormalArgList())?
+}
+
+void FormalArgList():{}
+{
+  FormalArg() | FormalArg() <COMMA> FormalArgList()
+}
+
+void FormalArg():{}
+{
+  Type() VarDeclaratorId()
+}
+
+void Type():{}          //removing left recursion
+{
+  PrimitiveType() Type2() | <ID> Type2()
+}
+
+void Type2():{}{
+  <LSB> <RSB> Type2() | <EMPTY>     }
+
+void PrimitiveType():{}
+{
+  <BOOLEAN> | <CHAR> | <INTEGER> | <VOID>  
+}
+
+void VarDeclaratorList():{}
+{
+  (VarDeclarator() (<COMMA> VarDeclaratorList())?)
+}
+
+void VarDeclarator():{}
+{
+  VarDeclaratorId() (<ASSIGN> Expression())?
+}
+
+void VarDeclaratorId():{}
+{
+  <ID> VarDeclaratorId2()
+}
+
+void VarDeclaratorId2():{}{
+   <LSB> <RSB> VarDeclaratorId2() | <EMPTY>  //empty prod}
+
+void Block():{}
+{
+  <LCB> (Statement())* <RCB>
+}
+
+void Statement():{}
+{
+  <SCOLON> | Type() VarDeclaratorList() <SCOLON> | <IF> <LP> Expression() <RP> Statement() | <IF> <LP> Expression() <RP> Statement() <ELSE> Statement() | Expression() <SCOLON> | <WHILE> <LP> Expression() <RP> Statement() | <RETURN> (Expression())? <SCOLON> | <CONTINUE> <SCOLON> | <BREAK> <SCOLON> | Block()
+}
+
+void Expression():{}
+{
+  UnaryOp() Expression() Expression2() | Primary() Expression2()
+}
+
+void Expression2():{}{
+  BinaryOp() Expression() Expression2() | <EMPTY>    //empty prod}
+
+void BinaryOp():{}
+{
+  <ASSIGN> | <OR> | <AND> | <EQUAL> | <NOTEQUAL> | <LESSER> | <GREATER> | <LESSEREQ> | <GREATEREQ> | <PLUS> | <MINUS> | <MULTIPLY> | <DIVIDE> | <MODULO> 
+}
+
+void UnaryOp():{}
+{
+  <MINUS> | <PLUS> | <NOT>
+}
+
+void Primary():{}       //changed production here to remove recursion
+{
+  NewArrayExpr() Primary2() | NonNewArrayExpr() Primary2() | <ID> Primary2() 
+}
+
+void Primary2():{}{
+  <DOT> <ID> ActualArgs() Primary2() | <EMPTY>   //empty prod}
+
+void NewArrayExpr():{}
+{
+  <NEW> <ID> (Dimension())+ | <NEW> PrimitiveType() (Dimension())+
+}
+
+void Dimension():{}
+{
+  <LSB> Expression() <RSB>
+}
+
+void NonNewArrayExpr():{}
+{
+  Literal() NonNewArrayExpr2() |
+  <THIS> NonNewArrayExpr2() |
+  <LP> Expression() <RP> NonNewArrayExpr2() |
+  <NEW> <ID> ActualArgs() NonNewArrayExpr2() |
+  <ID> ActualArgs() NonNewArrayExpr2() |
+  <SUPER> <DOT> <ID> ActualArgs() NonNewArrayExpr2() |
+  ArrayExpr() NonNewArrayExpr2() |
+  FieldExpr() NonNewArrayExpr2()
+}
+
+void NonNewArrayExpr2():{}{
+  Dimension() NonNewArrayExpr2() | <EMPTY>}
+
+
+void FieldExpr():{}
+{
+  Primary() <DOT> <ID> | <SUPER><DOT><ID>
+}
+
+void ArrayExpr():{}
+{
+  <ID> Dimension() 
+}
+
+void Literal():{}
+{
+  <NULL>|<TRUE>|<FALSE>|<INTEGER>|<CHARLITERAL>|<STRINGLITERAL>
+}
+
+void ActualArgs():{}
+{
+  <LP> (ExprList())? <RP>
+}
+
+void ExprList():{}
+{
+  Expression() | Expression() <COMMA> ExprList()
+}
