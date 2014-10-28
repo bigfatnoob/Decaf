@@ -41,150 +41,162 @@ public interface ParserConstants {
   /** RegularExpression Id. */
   int WHILE = 23;
   /** RegularExpression Id. */
-  int ABSTRACT = 24;
+  int BOOLEAN = 24;
   /** RegularExpression Id. */
-  int BYTE = 25;
+  int CHAR = 25;
   /** RegularExpression Id. */
-  int CASE = 26;
+  int VOID = 26;
   /** RegularExpression Id. */
-  int CATCH = 27;
+  int ABSTRACT = 27;
   /** RegularExpression Id. */
-  int CONST = 28;
+  int BYTE = 28;
   /** RegularExpression Id. */
-  int DEFLT = 29;
+  int CASE = 29;
   /** RegularExpression Id. */
-  int DO = 30;
+  int CATCH = 30;
   /** RegularExpression Id. */
-  int DOUBLE = 31;
+  int CONST = 31;
   /** RegularExpression Id. */
-  int FINAL = 32;
+  int DEFLT = 32;
   /** RegularExpression Id. */
-  int FINALLY = 33;
+  int DO = 33;
   /** RegularExpression Id. */
-  int FOR = 34;
+  int DOUBLE = 34;
   /** RegularExpression Id. */
-  int IMPLEMENTS = 35;
+  int FINAL = 35;
   /** RegularExpression Id. */
-  int IMPORT = 36;
+  int FINALLY = 36;
   /** RegularExpression Id. */
-  int INSTANCEOF = 37;
+  int FOR = 37;
   /** RegularExpression Id. */
-  int INTERFACE = 38;
+  int IMPLEMENTS = 38;
   /** RegularExpression Id. */
-  int LONG = 39;
+  int IMPORT = 39;
   /** RegularExpression Id. */
-  int NATIVE = 40;
+  int INSTANCEOF = 40;
   /** RegularExpression Id. */
-  int GOTO = 41;
+  int INTERFACE = 41;
   /** RegularExpression Id. */
-  int PACKAGE = 42;
+  int LONG = 42;
   /** RegularExpression Id. */
-  int SHORT = 43;
+  int NATIVE = 43;
   /** RegularExpression Id. */
-  int SWITCH = 44;
+  int GOTO = 44;
   /** RegularExpression Id. */
-  int SYNCHRONIZED = 45;
+  int PACKAGE = 45;
   /** RegularExpression Id. */
-  int THROW = 46;
+  int SHORT = 46;
   /** RegularExpression Id. */
-  int THROWS = 47;
+  int SWITCH = 47;
   /** RegularExpression Id. */
-  int TRANSIENT = 48;
+  int SYNCHRONIZED = 48;
   /** RegularExpression Id. */
-  int TRY = 49;
+  int THROW = 49;
   /** RegularExpression Id. */
-  int VOLATILE = 50;
+  int THROWS = 50;
   /** RegularExpression Id. */
-  int BYVALUE = 51;
+  int TRANSIENT = 51;
   /** RegularExpression Id. */
-  int CAST = 52;
+  int TRY = 52;
   /** RegularExpression Id. */
-  int FUTURE = 53;
+  int VOLATILE = 53;
   /** RegularExpression Id. */
-  int GENERIC = 54;
+  int BYVALUE = 54;
   /** RegularExpression Id. */
-  int INNER = 55;
+  int CAST = 55;
   /** RegularExpression Id. */
-  int NONE = 56;
+  int FUTURE = 56;
   /** RegularExpression Id. */
-  int OPERATOR = 57;
+  int GENERIC = 57;
   /** RegularExpression Id. */
-  int OUTER = 58;
+  int INNER = 58;
   /** RegularExpression Id. */
-  int REST = 59;
+  int NONE = 59;
   /** RegularExpression Id. */
-  int VAR = 60;
+  int OPERATOR = 60;
   /** RegularExpression Id. */
-  int INTEGER = 61;
+  int OUTER = 61;
   /** RegularExpression Id. */
-  int TRUE = 62;
+  int REST = 62;
   /** RegularExpression Id. */
-  int FALSE = 63;
+  int VAR = 63;
   /** RegularExpression Id. */
-  int CHAR = 64;
+  int INTEGER = 64;
   /** RegularExpression Id. */
-  int STRING = 65;
+  int TRUE = 65;
   /** RegularExpression Id. */
-  int NULL = 66;
+  int FALSE = 66;
   /** RegularExpression Id. */
-  int LP = 67;
+  int CHARLITERAL = 67;
   /** RegularExpression Id. */
-  int RP = 68;
+  int STRINGLITERAL = 68;
   /** RegularExpression Id. */
-  int LCB = 69;
+  int NULL = 69;
   /** RegularExpression Id. */
-  int RCB = 70;
+  int LP = 70;
   /** RegularExpression Id. */
-  int LSB = 71;
+  int RP = 71;
   /** RegularExpression Id. */
-  int RSB = 72;
+  int LCB = 72;
   /** RegularExpression Id. */
-  int SCOLON = 73;
+  int RCB = 73;
   /** RegularExpression Id. */
-  int COMMA = 74;
+  int LSB = 74;
   /** RegularExpression Id. */
-  int DOT = 75;
+  int RSB = 75;
   /** RegularExpression Id. */
-  int ASSIGN = 76;
+  int SCOLON = 76;
   /** RegularExpression Id. */
-  int GREATER = 77;
+  int COMMA = 77;
   /** RegularExpression Id. */
-  int LESSER = 78;
+  int DOT = 78;
   /** RegularExpression Id. */
-  int NOT = 79;
+  int ASSIGN = 79;
   /** RegularExpression Id. */
-  int EQUAL = 80;
+  int GREATER = 80;
   /** RegularExpression Id. */
-  int GREATEREQ = 81;
+  int LESSER = 81;
   /** RegularExpression Id. */
-  int LESSEREQ = 82;
+  int NOT = 82;
   /** RegularExpression Id. */
-  int NOTEQUAL = 83;
+  int EQUAL = 83;
   /** RegularExpression Id. */
-  int PLUS = 84;
+  int GREATEREQ = 84;
   /** RegularExpression Id. */
-  int MINUS = 85;
+  int LESSEREQ = 85;
   /** RegularExpression Id. */
-  int MULTIPLY = 86;
+  int NOTEQUAL = 86;
   /** RegularExpression Id. */
-  int DIVIDE = 87;
+  int PLUS = 87;
   /** RegularExpression Id. */
-  int AND = 88;
+  int MINUS = 88;
   /** RegularExpression Id. */
-  int OR = 89;
+  int MULTIPLY = 89;
   /** RegularExpression Id. */
-  int MODULO = 90;
+  int DIVIDE = 90;
   /** RegularExpression Id. */
-  int Let = 91;
+  int AND = 91;
   /** RegularExpression Id. */
-  int Dig = 92;
+  int OR = 92;
   /** RegularExpression Id. */
-  int ID = 93;
+  int MODULO = 93;
+  /** RegularExpression Id. */
+  int Let = 94;
+  /** RegularExpression Id. */
+  int Dig = 95;
+  /** RegularExpression Id. */
+  int ID = 96;
+  /** RegularExpression Id. */
+  int EMPTY = 97;
+  /** RegularExpression Id. */
+  int NON_EMPTY = 98;
 
   /** Lexical state. */
   int DEFAULT = 0;
   /** Lexical state. */
   int CMNT_BODY = 1;
+  /** Lexical state. */
+  int MATCH_NON_EMPTY = 2;
 
   /** Literal token values. */
   String[] tokenImage = {
@@ -212,6 +224,9 @@ public interface ParserConstants {
     "\"super\"",
     "\"this\"",
     "\"while\"",
+    "\"boolean\"",
+    "\"char\"",
+    "\"void\"",
     "\"abstract\"",
     "\"byte\"",
     "\"case\"",
@@ -252,8 +267,8 @@ public interface ParserConstants {
     "<INTEGER>",
     "\"true\"",
     "\"false\"",
-    "<CHAR>",
-    "<STRING>",
+    "<CHARLITERAL>",
+    "<STRINGLITERAL>",
     "\"null\"",
     "\"(\"",
     "\")\"",
@@ -265,7 +280,7 @@ public interface ParserConstants {
     "\",\"",
     "\".\"",
     "\"=\"",
-    "\" >\"",
+    "\">\"",
     "\"<\"",
     "\"!\"",
     "\"==\"",
@@ -282,6 +297,8 @@ public interface ParserConstants {
     "<Let>",
     "<Dig>",
     "<ID>",
+    "\"\"",
+    "<NON_EMPTY>",
   };
 
 }

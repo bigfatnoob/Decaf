@@ -10,7 +10,8 @@ public class Parser{  public static void main(String args []) throws ParseExce
             " reading from terminal instead");
         parser = new Parser(System.in);      }    } else {
       parser = new Parser(System.in);    }
-    parser.Start();  }
+    parser.Start();
+    System.out.println("Parsed Successfully");  }
 }PARSER_END(Parser)SKIP :  /* Whitespace */{  " "| "\r"| "\t"| "\n"
 | <"//"(~["\n","\r"])*("\n"|"\r"|"\n\r")>   // Single Line Comment
 | <"/*">: CMNT_BODY                         // Multi Line Comment}
@@ -86,7 +87,8 @@ TOKEN : {
 | < TRUE: "true" >
 | < FALSE: "false" >
 // TODO verify character definition
-| < CHARLITERAL: "'"(~["'", "\\"])|("\\"["a"-"z", "A"-"Z", "0"-"9"])|(" ")"'">
+//| < CHARLITERAL: "'"(~["'", "\\"])|("\\"["a"-"z", "A"-"Z", "0"-"9"])|(" ")"'">
+| < CHARLITERAL: "'"((~["'", "\\"])|" "|("\\t")|("\\n"))"'">
 | < STRINGLITERAL: "\""((~["\"","\n","\r"])|("\\\""))*"\"">
 | < NULL: "null">
   /* Punctuation */
@@ -101,7 +103,7 @@ TOKEN : {
 | < DOT: "." >
   /* Operators */
 | < ASSIGN: "=" >
-| < GREATER: " >" >
+| < GREATER: ">" >
 | < LESSER: "<" >
 | < NOT: "!" >
 | < EQUAL: "==" >
@@ -142,22 +144,22 @@ void Super():{}
 
 void Member():{}
 {
-  Field() | Method() | Ctor()
+  (LOOKAHEAD(10) Method() | LOOKAHEAD(10) Ctor() |  Field())
 }
 
 void Field():{}
 {
-  (Modifier())* Type() VarDeclaratorList()
+  (Modifier())* Type() VarDeclaratorList() <SCOLON>
 }
 
 void Method():{}
 {
-  (Modifier())* Type() <ID> FormalArgs() Block()
+  (Modifier())* Type() <ID> <LP > FormalArgs() <RP> Block()
 }
 
 void Ctor():{}
 {
-  (Modifier())* <ID> FormalArgs() Block()
+  (Modifier())* <ID> <LP> FormalArgs() < RP> Block()
 }
 
 void Modifier():{}
@@ -172,7 +174,7 @@ void FormalArgs():{}
 
 void FormalArgList():{}
 {
-  FormalArg() | FormalArg() <COMMA> FormalArgList()
+  FormalArg() ( <COMMA> FormalArgList() )? 
 }
 
 void FormalArg():{}
@@ -186,7 +188,7 @@ void Type():{}          //removing left recursion
 }
 
 void Type2():{}{
-  <LSB> <RSB> Type2() | <EMPTY>     }
+  (<LSB> <RSB> Type2())? // | <EMPTY>     }
 
 void PrimitiveType():{}
 {
@@ -209,7 +211,7 @@ void VarDeclaratorId():{}
 }
 
 void VarDeclaratorId2():{}{
-   <LSB> <RSB> VarDeclaratorId2() | <EMPTY>  //empty prod}
+   (<LSB> <RSB> VarDeclaratorId2())? // | <EMPTY>  //empty prod}
 
 void Block():{}
 {
@@ -218,27 +220,36 @@ void Block():{}
 
 void Statement():{}
 {
-  <SCOLON> | Type() VarDeclaratorList() <SCOLON> | <IF> <LP> Expression() <RP> Statement() | <IF> <LP> Expression() <RP> Statement() <ELSE> Statement() | Expression() <SCOLON> | <WHILE> <LP> Expression() <RP> Statement() | <RETURN> (Expression())? <SCOLON> | <CONTINUE> <SCOLON> | <BREAK> <SCOLON> | Block()
+  <SCOLON>  |
+  <IF> <LP> Expression() <RP> Statement() (LOOKAHEAD(2) <ELSE> Statement())? |
+  <WHILE> <LP> Expression() <RP> Statement() |
+  <RETURN> (Expression())? <SCOLON> |
+  <CONTINUE> <SCOLON> |
+  <BREAK> <SCOLON> |
+  Block() |
+  LOOKAHEAD(3) Expression() <SCOLON> |
+  Type() VarDeclaratorList() <SCOLON>
 }
 
 //Mathematical expression productions start here
 void Expression():{}{
-  St() <ASSIGN> Expression()
-| St() }
+  St() (<ASSIGN> Expression())?
+  // | < EMPTY>
+}
 
 void St():{}{
   L() St2()}
 
-vois St2():{}{
-  <OR> L() St2()
-  | <EMPTY>}
+void St2():{}{
+  (<OR> L() St2())?
+  //| <EMPTY>}
 
 void L():{}{
   M() L2()}
 
 void L2():{}{
-  <AND> M() L2()
-| <EMPTY>}
+  (<AND> M() L2())?
+//| <EMPTY>}
 
 void M():{}
 {
@@ -247,18 +258,14 @@ void M():{}
 
 void M2():{}
 {
-  <EQUAL> N() M2()
-| <NOTEQUAL> N() M2()
-| <EMPTY>
+  (<EQUAL> N() M2()
+| <NOTEQUAL> N() M2())?
+//| <EMPTY>
 }
 
 void N():{}
 {
-  P() <LESSER> P()
-| P() <GREATER> P()
-| P() <LESSEREQ> P()
-| P() <GREATEREQ> P()
-| P()
+  P() ( (<LESSEREQ> | <GREATEREQ> | <LESSER> | <GREATER> ) P()) ?
 }
 
 void P():{}
@@ -268,9 +275,9 @@ void P():{}
 
 void P2():{}
 {
-  <PLUS> Q() P2()
-| <MINUS> Q() P2()
-| <EMPTY>
+  (<PLUS> Q() P2()
+| <MINUS> Q() P2())?
+//| <EMPTY>
 }
 
 void Q():{}
@@ -280,10 +287,10 @@ void Q():{}
 
 void Q2():{}
 {
-  <MULTIPLY> R() Q2()
+  (<MULTIPLY> R() Q2()
 | <DIVIDE> R() Q2()
-| <MODULO> R() Q2()
-| <EMPTY>
+| <MODULO> R() Q2())?
+//| <EMPTY>
 }
 
 void R():{}
@@ -292,7 +299,8 @@ void R():{}
 | Primary()
 }
 
-/*void Expression():{}
+/*
+void Expression():{}
 {
   UnaryOp() Expression() Expression2() | Primary() Expression2()
 }
@@ -303,24 +311,39 @@ void Expression2():{}{
 void BinaryOp():{}
 {
   <ASSIGN> | <OR> | <AND> | <EQUAL> | <NOTEQUAL> | <LESSER> | <GREATER> | <LESSEREQ> | <GREATEREQ> | <PLUS> | <MINUS> | <MULTIPLY> | <DIVIDE> | <MODULO> 
-}*/
-
+}
+*/
 void UnaryOp():{}
 {
   <MINUS> | <PLUS> | <NOT>
 }
 
+/**
 void Primary():{}       //changed production here to remove recursion
 {
   NewArrayExpr() Primary2() | NonNewArrayExpr() Primary2() | <ID> Primary2() 
 }
+**/
+
+void Primary():{}
+{
+  LOOKAHEAD(3) NewArrayExpr() Primary2() |
+  Literal() NonNewArrayExpr2() Primary2() |
+  <THIS> NonNewArrayExpr2() Primary2() |
+  <LP> Expression() <RP> NonNewArrayExpr2() Primary2() |
+  LOOKAHEAD(3) <NEW> <ID> ActualArgs() NonNewArrayExpr2() Primary2() |
+  <SUPER> <DOT> <ID> (ActualArgs() NonNewArrayExpr2())? Primary2() |
+  <ID> (ActualArgs() NonNewArrayExpr2() Primary2() |
+   (Dimension())? NonNewArrayExpr2() Primary2() )
+}
+
 
 void Primary2():{}{
-  <DOT> <ID> ActualArgs() Primary2() | <EMPTY>   //empty prod}
+  (<DOT> <ID> (ActualArgs())? Primary2() )?//| <EMPTY>   //empty production}
 
 void NewArrayExpr():{}
 {
-  <NEW> <ID> (Dimension())+ | <NEW> PrimitiveType() (Dimension())+
+  <NEW> ( <ID> | PrimitiveType() ) (Dimension())+
 }
 
 void Dimension():{}
@@ -330,23 +353,23 @@ void Dimension():{}
 
 void NonNewArrayExpr():{}
 {
-  Literal() NonNewArrayExpr2() |
-  <THIS> NonNewArrayExpr2() |
-  <LP> Expression() <RP> NonNewArrayExpr2() |
-  <NEW> <ID> ActualArgs() NonNewArrayExpr2() |
-  <ID> ActualArgs() NonNewArrayExpr2() |
-  <SUPER> <DOT> <ID> ActualArgs() NonNewArrayExpr2() |
-  ArrayExpr() NonNewArrayExpr2() |
-  FieldExpr() NonNewArrayExpr2()
+  LOOKAHEAD(3) Literal() NonNewArrayExpr2() |
+  LOOKAHEAD(3) <THIS> NonNewArrayExpr2() |
+  LOOKAHEAD(3) <LP> Expression() <RP> NonNewArrayExpr2() |
+  LOOKAHEAD(3) <NEW> <ID> ActualArgs() NonNewArrayExpr2() |
+  LOOKAHEAD(3) <ID> ActualArgs() NonNewArrayExpr2() |
+  LOOKAHEAD(3) <SUPER> <DOT> <ID> ActualArgs() NonNewArrayExpr2() |
+  LOOKAHEAD(3) ArrayExpr() NonNewArrayExpr2() |
+  LOOKAHEAD(3) FieldExpr() NonNewArrayExpr2()
 }
 
 void NonNewArrayExpr2():{}{
-  Dimension() NonNewArrayExpr2() | <EMPTY>}
+  (Dimension() NonNewArrayExpr2())?}
 
 
 void FieldExpr():{}
 {
-  Primary() <DOT> <ID> | <SUPER><DOT><ID>
+  LOOKAHEAD(3) Primary() <DOT> <ID> | <SUPER><DOT><ID>
 }
 
 void ArrayExpr():{}
@@ -366,5 +389,5 @@ void ActualArgs():{}
 
 void ExprList():{}
 {
-  Expression() | Expression() <COMMA> ExprList()
+  Expression() ( <COMMA> ExprList() ) ?
 }
