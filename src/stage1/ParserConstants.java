@@ -47,149 +47,151 @@ public interface ParserConstants {
   /** RegularExpression Id. */
   int VOID = 26;
   /** RegularExpression Id. */
-  int ABSTRACT = 27;
+  int INT = 27;
   /** RegularExpression Id. */
-  int BYTE = 28;
+  int ABSTRACT = 28;
   /** RegularExpression Id. */
-  int CASE = 29;
+  int BYTE = 29;
   /** RegularExpression Id. */
-  int CATCH = 30;
+  int CASE = 30;
   /** RegularExpression Id. */
-  int CONST = 31;
+  int CATCH = 31;
   /** RegularExpression Id. */
-  int DEFLT = 32;
+  int CONST = 32;
   /** RegularExpression Id. */
-  int DO = 33;
+  int DEFLT = 33;
   /** RegularExpression Id. */
-  int DOUBLE = 34;
+  int DO = 34;
   /** RegularExpression Id. */
-  int FINAL = 35;
+  int DOUBLE = 35;
   /** RegularExpression Id. */
-  int FINALLY = 36;
+  int FINAL = 36;
   /** RegularExpression Id. */
-  int FOR = 37;
+  int FINALLY = 37;
   /** RegularExpression Id. */
-  int IMPLEMENTS = 38;
+  int FOR = 38;
   /** RegularExpression Id. */
-  int IMPORT = 39;
+  int IMPLEMENTS = 39;
   /** RegularExpression Id. */
-  int INSTANCEOF = 40;
+  int IMPORT = 40;
   /** RegularExpression Id. */
-  int INTERFACE = 41;
+  int INSTANCEOF = 41;
   /** RegularExpression Id. */
-  int LONG = 42;
+  int INTERFACE = 42;
   /** RegularExpression Id. */
-  int NATIVE = 43;
+  int LONG = 43;
   /** RegularExpression Id. */
-  int GOTO = 44;
+  int NATIVE = 44;
   /** RegularExpression Id. */
-  int PACKAGE = 45;
+  int GOTO = 45;
   /** RegularExpression Id. */
-  int SHORT = 46;
+  int PACKAGE = 46;
   /** RegularExpression Id. */
-  int SWITCH = 47;
+  int SHORT = 47;
   /** RegularExpression Id. */
-  int SYNCHRONIZED = 48;
+  int SWITCH = 48;
   /** RegularExpression Id. */
-  int THROW = 49;
+  int SYNCHRONIZED = 49;
   /** RegularExpression Id. */
-  int THROWS = 50;
+  int THROW = 50;
   /** RegularExpression Id. */
-  int TRANSIENT = 51;
+  int THROWS = 51;
   /** RegularExpression Id. */
-  int TRY = 52;
+  int TRANSIENT = 52;
   /** RegularExpression Id. */
-  int VOLATILE = 53;
+  int TRY = 53;
   /** RegularExpression Id. */
-  int BYVALUE = 54;
+  int VOLATILE = 54;
   /** RegularExpression Id. */
-  int CAST = 55;
+  int BYVALUE = 55;
   /** RegularExpression Id. */
-  int FUTURE = 56;
+  int CAST = 56;
   /** RegularExpression Id. */
-  int GENERIC = 57;
+  int FUTURE = 57;
   /** RegularExpression Id. */
-  int INNER = 58;
+  int GENERIC = 58;
   /** RegularExpression Id. */
-  int NONE = 59;
+  int INNER = 59;
   /** RegularExpression Id. */
-  int OPERATOR = 60;
+  int NONE = 60;
   /** RegularExpression Id. */
-  int OUTER = 61;
+  int OPERATOR = 61;
   /** RegularExpression Id. */
-  int REST = 62;
+  int OUTER = 62;
   /** RegularExpression Id. */
-  int VAR = 63;
+  int REST = 63;
   /** RegularExpression Id. */
-  int INTEGER = 64;
+  int VAR = 64;
   /** RegularExpression Id. */
-  int TRUE = 65;
+  int INTEGER = 65;
   /** RegularExpression Id. */
-  int FALSE = 66;
+  int TRUE = 66;
   /** RegularExpression Id. */
-  int CHARLITERAL = 67;
+  int FALSE = 67;
   /** RegularExpression Id. */
-  int STRINGLITERAL = 68;
+  int CHARLITERAL = 68;
   /** RegularExpression Id. */
-  int NULL = 69;
+  int STRINGLITERAL = 69;
   /** RegularExpression Id. */
-  int LP = 70;
+  int NULL = 70;
   /** RegularExpression Id. */
-  int RP = 71;
+  int LP = 71;
   /** RegularExpression Id. */
-  int LCB = 72;
+  int RP = 72;
   /** RegularExpression Id. */
-  int RCB = 73;
+  int LCB = 73;
   /** RegularExpression Id. */
-  int LSB = 74;
+  int RCB = 74;
   /** RegularExpression Id. */
-  int RSB = 75;
+  int LSB = 75;
   /** RegularExpression Id. */
-  int SCOLON = 76;
+  int RSB = 76;
   /** RegularExpression Id. */
-  int COMMA = 77;
+  int SCOLON = 77;
   /** RegularExpression Id. */
-  int DOT = 78;
+  int COMMA = 78;
   /** RegularExpression Id. */
-  int ASSIGN = 79;
+  int DOT = 79;
   /** RegularExpression Id. */
-  int GREATER = 80;
+  int ASSIGN = 80;
   /** RegularExpression Id. */
-  int LESSER = 81;
+  int GREATER = 81;
   /** RegularExpression Id. */
-  int NOT = 82;
+  int LESSER = 82;
   /** RegularExpression Id. */
-  int EQUAL = 83;
+  int NOT = 83;
   /** RegularExpression Id. */
-  int GREATEREQ = 84;
+  int EQUAL = 84;
   /** RegularExpression Id. */
-  int LESSEREQ = 85;
+  int GREATEREQ = 85;
   /** RegularExpression Id. */
-  int NOTEQUAL = 86;
+  int LESSEREQ = 86;
   /** RegularExpression Id. */
-  int PLUS = 87;
+  int NOTEQUAL = 87;
   /** RegularExpression Id. */
-  int MINUS = 88;
+  int PLUS = 88;
   /** RegularExpression Id. */
-  int MULTIPLY = 89;
+  int MINUS = 89;
   /** RegularExpression Id. */
-  int DIVIDE = 90;
+  int MULTIPLY = 90;
   /** RegularExpression Id. */
-  int AND = 91;
+  int DIVIDE = 91;
   /** RegularExpression Id. */
-  int OR = 92;
+  int AND = 92;
   /** RegularExpression Id. */
-  int MODULO = 93;
+  int OR = 93;
   /** RegularExpression Id. */
-  int Let = 94;
+  int MODULO = 94;
   /** RegularExpression Id. */
-  int Dig = 95;
+  int Let = 95;
   /** RegularExpression Id. */
-  int ID = 96;
+  int Dig = 96;
   /** RegularExpression Id. */
-  int EMPTY = 97;
+  int ID = 97;
   /** RegularExpression Id. */
-  int NON_EMPTY = 98;
+  int EMPTY = 98;
+  /** RegularExpression Id. */
+  int NON_EMPTY = 99;
 
   /** Lexical state. */
   int DEFAULT = 0;
@@ -227,6 +229,7 @@ public interface ParserConstants {
     "\"boolean\"",
     "\"char\"",
     "\"void\"",
+    "\"int\"",
     "\"abstract\"",
     "\"byte\"",
     "\"case\"",

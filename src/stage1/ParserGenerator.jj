@@ -43,6 +43,7 @@ TOKEN : {
 | < BOOLEAN : "boolean">
 | < CHAR : "char" >
 | < VOID : "void" >
+| < INT : "int">
   /* Forbidden Keywords from JAVA */
 | < ABSTRACT : "abstract">
 | < BYTE : "byte">

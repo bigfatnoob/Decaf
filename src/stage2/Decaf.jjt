@@ -1,0 +1,280 @@
+/**
+ * JJTree template file created by SF JavaCC plugin 1.5.17+ wizard for JavaCC 1.5.0+
+ */
+options
+{
+  JDK_VERSION = "1.5";
+  MULTI = true;
+  NODE_DEFAULT_VOID = true;
+  NODE_PREFIX = "";
+}
+
+PARSER_BEGIN(Decaf)
+package stage2;
+
+public class Decaf
+{
+  public static void main(String args [])
+  {
+    System.out.println("Reading from standard input...");
+    System.out.print("Enter an expression like \"1+(2+3)*var;\" :");
+    Decaf parser = new Decaf(System.in);
+    try
+    {
+      List<Unit> units = parser.Start();
+      for (Unit unit: units) {
+        System.out.println("\n");      }
+      System.out.println("Thank you.");
+    }
+    catch (Exception e)
+    {
+      System.out.println("Oops.");
+      System.out.println(e.getMessage());
+    }
+  }
+}
+
+PARSER_END(Decaf)
+
+SKIP :  /* Whitespace */
+{
+  " "
+| "\r"
+| "\t"
+| "\n"
+| <"//"(~["\n","\r"])*("\n"|"\r"|"\n\r")>   // Single Line Comment
+| <"/*">: CMNT_BODY                         // Multi Line Comment
+}
+
+<CMNT_BODY>
+SKIP:
+{
+  <"*/">: DEFAULT
+| <~[]>
+}
+
+
+
+TOKEN : 
+{
+  /* Keywords */
+  < BREAK : "break">
+| < CLASS : "class">
+| < CONTINUE : "continue">
+| < ELSE : "else">
+| < EXTENDS : "extends">
+| < IF : "if">
+| < NEW : "new">
+| < PRIVATE : "private">
+| < PROTECTED : "protected">
+| < PUBLIC : "public">
+| < RETURN : "return">
+| < STATIC : "static">
+| < SUPER : "super">
+| < THIS : "this">
+| < WHILE : "while">
+| < BOOLEAN : "boolean">
+| < CHAR : "char" >
+| < VOID : "void" >
+| < INT : "int">
+  /* Forbidden Keywords from JAVA */
+| < ABSTRACT : "abstract">
+| < BYTE : "byte">
+| < CASE : "case">
+| < CATCH : "catch">
+| < CONST : "const">
+| < DEFLT : "default">
+| < DO : "do">
+| < DOUBLE : "double">
+| < FINAL : "final">
+| < FINALLY : "finally">
+| < FOR : "for">
+| < IMPLEMENTS : "implements">
+| < IMPORT : "import">
+| < INSTANCEOF : "instanceof">
+| < INTERFACE : "interface">
+| < LONG : "long">
+| < NATIVE : "native">
+| < GOTO : "goto">
+| < PACKAGE : "package">
+| < SHORT : "short">
+| < SWITCH : "switch">
+| < SYNCHRONIZED : "synchronized">
+| < THROW : "throw">
+| < THROWS : "throws">
+| < TRANSIENT : "transient">
+| < TRY : "try">
+| < VOLATILE : "volatile">
+  /* Reserved for possible future extension */
+| < BYVALUE : "byvalue">
+| < CAST : "cast">
+| < FUTURE : "future">
+| < GENERIC : "generic">
+| < INNER : "inner">
+| < NONE : "none">
+| < OPERATOR : "operator">
+| < OUTER : "outer">
+| < REST : "rest">
+| < VAR : "var">
+  /* Literals */
+| < INTEGER: "0"|(["1"-"9"](["0"-"9"])*)>
+| < TRUE: "true" >
+| < FALSE: "false" >
+// TODO verify character definition
+//| < CHARLITERAL: "'"(~["'", "\\"])|("\\"["a"-"z", "A"-"Z", "0"-"9"])|(" ")"'">
+| < CHARLITERAL: "'"((~["'", "\\"])|" "|("\\t")|("\\n"))"'">
+| < STRINGLITERAL: "\""((~["\"","\n","\r"])|("\\\""))*"\"">
+| < NULL: "null">
+  /* Punctuation */
+| < LP: "(" >
+| < RP: ")" >
+| < LCB: "{" >
+| < RCB: "}" >
+| < LSB: "[" >
+| < RSB: "]" >
+| < SCOLON: ";" >
+| < COMMA: "," >
+| < DOT: "." >
+  /* Operators */
+| < ASSIGN: "=" >
+| < GREATER: ">" >
+| < LESSER: "<" >
+| < NOT: "!" >
+| < EQUAL: "==" >
+| < GREATEREQ: ">=" >
+| < LESSEREQ: "<=" >
+| < NOTEQUAL: "!=" >
+| < PLUS : "+" >
+| < MINUS : "-" >
+| < MULTIPLY : "*" >
+| < DIVIDE : "/" >
+| < AND: "&&">
+| < OR: "||">
+| < MODULO: "%">
+  /* Identifiers */
+| < #Let : ["a"-"z", "A"-"Z"]>
+| < #Dig : ["0"-"9"]>
+| < ID: ("$"|"_"|<Let>)("$"|"_"|<Let>|<Dig>)*>
+| < EMPTY : ""> : MATCH_NON_EMPTY
+}
+
+< MATCH_NON_EMPTY>
+TOKEN:
+{
+  <NON_EMPTY : ~[]>
+}
+
+
+List<Unit> Start():
+{
+  Unit classUnit = null;
+  List<Unit> classUnitList = new ArrayList<Unit >();
+}
+{
+  (classUnit = Class(){classUnitList.add(classUnit);})*<EOF>
+  {return classUnitList;}
+}
+
+Unit Class():
+{
+  Unit classUnit = null;
+  List<Unit> classFields = new ArrayList<Unit>();
+  List<Unit> classFieldsCollection = new ArrayList<Unit>();
+}
+{
+  <CLASS> <ID> (< EXTENDS > < ID>)? <LCB>
+    (classFields = Member(){classFieldsCollection.addAll(classFields);})*
+    {
+        classUnit = new Unit();
+        // Symbol table insertion to be performed
+        return classUnit;
+    }
+   <RCB>
+}
+
+List<Unit> Member():
+{
+  Unit member = null;
+  List<Unit> memberList = null;
+  List<Unit> allMembers = new ArrayList<Unit>();
+}
+{
+  Field()
+  memberList = Field(){allMembers.addAll(memberList); return memberList;}
+  /***
+  |(LOOKAHEAD(Method()))
+  member = Method(){allMembers.add(member); return memberList;}
+  |(LOOKAHEAD(Ctor()))
+  member = Ctor(){allMembers.add(member); return memberList;}**/
+}
+
+List<Unit> Field():
+{
+  FieldDetails fieldDetails = new FieldDetails();
+  Modifier modifier = null;
+  List<Unit> fieldList = null;
+}
+{
+  modifier = Modifier(){fieldDetails.setModifier(modifier);}
+  fieldList = FieldDeclarations(fieldDetails){return fieldList;}
+}
+
+Modifier Modifier():
+{
+  Modifier modifier = new Modifier();
+}
+{
+  [<PUBLIC>{modifier.setScopePublic(true);}|<PRIVATE>{modifier.setScopePrivate(true);}|<PROTECTED>{modifier.setScopeProtected(true);}]{return modifier;}
+  [<STATIC>{modifier.setScopeStatic(true);}]{return modifier;}
+}
+
+List<Unit> FieldDeclarations(FieldDetails fieldDetails):
+{
+  SimpleNode type = null;
+  List<Unit> variables = null;
+}
+{
+  type = Type(){fieldDetails.setType(type);}
+  variables = Variables(fieldDetails)<SCOLON>{return variables;}
+}
+
+SimpleNode Type():{
+  Token t = null;
+}
+{
+  t = <INT> {return jjtThis;}#int_AST
+  |t = <CHAR> {return jjtThis;}#char_AST
+  |t = <BOOLEAN> {return jjtThis;}#boolean_AST
+  |t = <ID>{return jjtThis;}#id_AST
+}
+
+List<Unit> Variables(FieldDetails fieldDetails):{
+  List<Unit> variables = new ArrayList<Unit>();
+  Unit variable = null;
+}
+{
+  variable=Variable(fieldDetails){variables.add(variable);}
+  (<COMMA> variable=Variable(fieldDetails){variables.add(variable);})*{return variables;}
+}
+
+Unit Variable(FieldDetails fieldDetails):{
+  VariableUnit variable = new VariableUnit();
+  String variableName = null;
+}
+{
+  variableName = ID(){variable.setName(variableName);}(<LSB><RSB>{variable.setArray(true);})*
+  {
+    variable.setType(fieldDetails.getType());
+    variable.setModifier(fieldDetails.getModifier());
+    return variable; 
+    // Symbol table insertion
+  }
+}
+
+String ID():
+{
+  Token t;
+}
+{
+  t = <ID>{return t.image;}
+}
