@@ -23,7 +23,8 @@ public class Decaf
     {
       List<Unit> units = parser.Start();
       for (Unit unit: units) {
-        System.out.println("\n");      }
+        System.out.println("\n");
+      }
       System.out.println("Thank you.");
     }
     catch (Exception e)
@@ -164,6 +165,13 @@ TOKEN:
   <NON_EMPTY : ~[]>
 }
 
+String ID():
+{
+  Token t;
+}
+{
+  t = <ID>{return t.image;}
+}
 
 List<Unit> Start():
 {
@@ -199,13 +207,12 @@ List<Unit> Member():
   List<Unit> allMembers = new ArrayList<Unit>();
 }
 {
-  Field()
+  LOOKAHEAD(Field())
   memberList = Field(){allMembers.addAll(memberList); return memberList;}
-  /***
-  |(LOOKAHEAD(Method()))
+  |LOOKAHEAD(Method())
   member = Method(){allMembers.add(member); return memberList;}
-  |(LOOKAHEAD(Ctor()))
-  member = Ctor(){allMembers.add(member); return memberList;}**/
+  |LOOKAHEAD(Ctor())
+  member = Ctor(){allMembers.add(member); return memberList;}
 }
 
 List<Unit> Field():
@@ -271,10 +278,159 @@ Unit Variable(FieldDetails fieldDetails):{
   }
 }
 
-String ID():
-{
-  Token t;
+Unit Method():{
+  MethodUnit methodUnit = new MethodUnit();
+  Modifier modifier = null;
+  SimpleNode type = null;
+  List<Unit> formalArgs = null;
+  Token t = null;
 }
 {
-  t = <ID>{return t.image;}
+  modifier = Modifier(){methodUnit.setModifier(modifier);} 
+  ( type = Type() | < VOID > {type = jjtThis; } #voidType_AST){methodUnit.setReturnType(type);}
+  ID() <LP> (formalArgs = FormalArgs()){methodUnit.setFormalArgs(formalArgs);}<RP>
+  Block()//Handle Scoping here
+  {return methodUnit;}
+}
+
+Unit Ctor():{
+  MethodUnit methodUnit = new MethodUnit();
+  Modifier modifier = null;
+  List<Unit> formalArgs = null;
+  Token t = null;
+}
+{
+  modifier = Modifier(){methodUnit.setModifier(modifier);}
+  ID()<LP>(formalArgs = FormalArgs(){methodUnit.setFormalArgs(formalArgs);})?<RP>
+  Block()//Handle Scoping here
+  {return methodUnit;}
+}
+
+List<Unit> FormalArgs():
+{
+  Unit formalArg = null;
+  List<Unit> formalArgs = new ArrayList<Unit>();
+}
+{
+  formalArg = FormalArg(){formalArgs.add(formalArg);}
+  (<COMMA> formalArg = FormalArg(){formalArgs.add(formalArg);})*
+  {return formalArgs;}
+}
+
+Unit FormalArg():{
+  FieldDetails fieldDetails = new FieldDetails();
+  Unit formalArg = null;
+  SimpleNode type = null;
+}
+{
+  type = Type(){fieldDetails.setType(type);}
+  formalArg = Variable(fieldDetails){return formalArg;}
+}
+
+void Block() #block_AST:{
+}
+{
+  <LCB>(Statement())*<RCB>
+}
+
+void Statement():{
+}
+{
+  LOOKAHEAD(3)<IF> <LP> Expression() <RP> Statement() (LOOKAHEAD(1) <ELSE> Statement())? #ifThenElseStat_AST
+  |<WHILE> <LP> Expression() <RP> Statement() #whileStat_AST
+  |<RETURN> (Expression())? <SCOLON> #returnStat_AST
+  |LOOKAHEAD(2) StatementExpression() <SCOLON> #expressionStat_AST // Add to Statements attributes
+  |LOOKAHEAD(2) FieldDeclarations(new FieldDetails())#varDeclStat_AST // Add to Statements attributes
+  |<BREAK> <SCOLON> #breakStat_AST
+  |<CONTINUE> <SCOLON> #continueStat_AST
+  |<SCOLON> #emptyStat_AST
+}
+
+void Literal():{}
+{
+  <NULL> #nullExpr_AST
+  |<TRUE> #boolExpr_AST
+  |<FALSE> #boolExpr_AST
+  |<INTEGER> #intExpr_AST
+  |<CHARLITERAL> #charExpr_AST
+  |<STRINGLITERAL> #stringExpr_AST
+}
+
+void StatementExpression():{}
+{
+  /**
+  LOOKAHEAD(LHS() <ASSIGN>)
+  Assignment() // TODO
+  |**/ 
+  MethodCall()
+}
+
+void MethodCall() #methodCall_AST:{}
+{
+  MethodCall_1()(MethodCall_2())?
+}
+
+void MethodCall_1() #methodCall_AST:{}
+{
+  MethodParent() (MethodPrime())? <LP>(ActualArguments())?<RP>
+}
+
+void MethodCall_2():{}
+{
+  LOOKAHEAD(<DOT> <ID> <LP> (ActualArguments())? <RP> MethodCall_2())<DOT> <ID> <LP> (ActualArguments())? <RP> #AstMethodExpr MethodCall_2()
+  | LOOKAHEAD(<DOT> <ID> <LSB> Expression() <RSB> <LP> (ActualArguments())? <RP> MethodCall_2())
+    <DOT> <ID> <LSB> Expression() <RSB> <LP> (ActualArguments())? <RP> MethodCall_2()
+  | LOOKAHEAD(<DOT> <ID> MethodPrime() <LP> (ActualArguments())? <RP> MethodCall_2())
+    <DOT> <ID> MethodPrime() <LP> (ActualArguments())? <RP> MethodCall_2()
+  | LOOKAHEAD(<DOT> <ID> <LSB> Expression() <RSB> MethodPrime() <LP> (ActualArguments())? <RP> MethodCall_2())
+    <DOT> <ID> <LSB> Expression() <RSB> MethodPrime() <LP> (ActualArguments())? <RP> MethodCall_2()
+  | LOOKAHEAD(<DOT> <ID> <LP> (ActualArguments())? <RP>)
+    <DOT> <ID> <LP> (ActualArguments())? <RP>
+  | LOOKAHEAD(<DOT> <ID> <LSB> Expression() <RSB> <LP> (ActualArguments())? <RP>)
+    <DOT> <ID> <LSB> Expression() <RSB> <LP> (ActualArguments())? <RP>
+  | LOOKAHEAD(<DOT> <ID> MethodPrime() <LP> (ActualArguments())? <RP>)
+    <DOT> <ID> MethodPrime() <LP> (ActualArguments())? <RP>
+  | LOOKAHEAD(<DOT> <ID> <LSB> Expression() <RSB> MethodPrime() <LP> (ActualArguments())? <RP>)
+    <DOT> <ID> <LSB> Expression() <RSB> MethodPrime() <LP> (ActualArguments())? <RP>
+}
+
+void MethodParent():{}
+{
+  (PrimaryMethodParent() <DOT> <ID> #fieldExpr_AST)  (<LSB> Expression() <RSB> #arrayExpr_AST)? 
+  | (<ID> #idExpr_AST) (<LSB> Expression() <RSB> #arrayExpr_AST)? 
+
+}
+
+void PrimaryMethodParent():{}
+{
+  LOOKAHEAD(3)
+    Literal()
+  | LOOKAHEAD(3)
+    <THIS> #thisExpr_AST
+  | LOOKAHEAD(3)
+    <SUPER> #superExpr_AST
+  | LOOKAHEAD(3)
+    <LP> Expression() <RP>
+  | LOOKAHEAD(3)
+    <NEW> <ID> <LP> (ActualArguments())? <RP> #methodExpr_AST
+}
+
+void MethodPrime():{}
+{
+  LOOKAHEAD (<DOT> <ID> MethodPrime())
+    <DOT> <ID> #fieldExpr_AST MethodPrime()
+  | LOOKAHEAD(<DOT> <ID> <LSB> Expression() <RSB> MethodPrime())
+    <DOT> <ID> #fieldExpr_AST <LSB> Expression() <RSB> #arrayExpr_AST MethodPrime()
+  | LOOKAHEAD(3) <DOT> <ID> #fieldExpr_AST <LSB> Expression() <RSB> #arrayExpr_AST
+  | <DOT> <ID> #fieldExpr_AST
+}
+
+void ActualArguments():{}
+{
+  Expression() (<COMMA> Expression())?
+}
+
+void Expression():{}
+{
+  "Expression"
 }
