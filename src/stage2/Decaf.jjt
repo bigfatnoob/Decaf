@@ -358,16 +358,50 @@ void Literal():{}
 
 void StatementExpression():{}
 {
-  /**
-  LOOKAHEAD(LHS() <ASSIGN>)
-  Assignment() // TODO
-  |**/ 
+  LOOKAHEAD(FieldAccess() <ASSIGN>)
+  Assignment()
+  |
   MethodCall()
+}
+
+void Assignment():{}
+{
+  FieldAccess() <ASSIGN> #assignOperator_AST Expression()
+}
+
+void FieldAccess():{}
+{
+  FieldAccess_1()(MethodPrime())? 
+}
+
+void FieldAccess_1():{}
+{
+  LOOKAHEAD(PrimaryFieldAccess() <DOT> <ID> <LSB> Expression() <RSB>)
+  PrimaryFieldAccess() <DOT> <ID> #fieldExpr_AST <LSB> Expression() <RSB> #arrayExpr_AST
+  | LOOKAHEAD(PrimaryFieldAccess() <DOT> <ID>)
+  PrimaryFieldAccess() <DOT> <ID> #fieldExpr_AST
+  | LOOKAHEAD(<ID> <LSB> Expression() <RSB>)
+  <ID> #idExpr_AST <LSB> Expression() <RSB> #arrayExpr_AST 
+  | <ID> #idExpr_AST
+}
+
+void PrimaryFieldAccess():{}
+{
+  LOOKAHEAD(MethodCall()) 
+  MethodCall()
+  | LOOKAHEAD(3) Literal()
+  | LOOKAHEAD(3) <THIS> #thisExpr_AST
+  | LOOKAHEAD(3) <SUPER> #superExpr_AST
+  | LOOKAHEAD(3) <LP> Expression() <RP>
+  | LOOKAHEAD(3) <NEW> <ID> <LP> (ActualArguments())? <RP> #newClassExpr_AST
 }
 
 void MethodCall() #methodCall_AST:{}
 {
-  MethodCall_1()(MethodCall_2())?
+  LOOKAHEAD(MethodCall_1() MethodCall_2())
+  MethodCall_1() MethodCall_2()
+  | LOOKAHEAD(MethodCall_1())
+  MethodCall_1()
 }
 
 void MethodCall_1() #methodCall_AST:{}
@@ -432,5 +466,108 @@ void ActualArguments():{}
 
 void Expression():{}
 {
-  "Expression"
+  (LOOKAHEAD(OrExpression() <ASSIGN> )
+  OrExpression() <ASSIGN> #assignOperator_AST Expression()
+  | LOOKAHEAD(OrExpression()) OrExpression()) #binaryExpression_AST(>1)
+}
+
+void OrExpression():{}
+{
+  (LOOKAHEAD(AndExpression() <OR> )
+  AndExpression() <OR> #orOperator_AST OrExpression()
+  | LOOKAHEAD(AndExpression()) AndExpression()) #binaryExpression_AST(>1)
+}
+
+void AndExpression():{}
+{
+  (LOOKAHEAD(EqualityExpression() <AND> )
+  EqualityExpression() <AND> #andOperator_AST AndExpression()
+  | LOOKAHEAD(EqualityExpression()) EqualityExpression()) #binaryExpression_AST(>1)
+}
+
+void EqualityExpression():{}
+{
+  (LOOKAHEAD(RelationalExpression() <EQUAL> )
+  RelationalExpression() <EQUAL> #equalOperator_AST EqualityExpression()
+  | LOOKAHEAD(RelationalExpression()) RelationalExpression()) #binaryExpression_AST(>1)
+}
+
+void RelationalExpression():{}
+{
+  (LOOKAHEAD(SumExpression() <GREATER>) SumExpression() <GREATER> #greaterOperator_AST RelationalExpression()
+  |LOOKAHEAD(SumExpression() <GREATEREQ>) SumExpression() <GREATEREQ> #greaterEqualOperator_AST RelationalExpression()
+  |LOOKAHEAD(SumExpression() <LESSER>) SumExpression() <LESSER> #lesserOperator_AST RelationalExpression()
+  |LOOKAHEAD(SumExpression() <LESSEREQ>) SumExpression() <LESSEREQ> #lesserEqualOperator_AST RelationalExpression()
+  |LOOKAHEAD(SumExpression()) SumExpression()) #binaryExpression_AST(>1)
+}
+
+void SumExpression():{}
+{
+  (LOOKAHEAD(FactorExpression() <PLUS>) FactorExpression() <PLUS> #plusOperator_AST SumExpression()
+  |LOOKAHEAD(FactorExpression() <MINUS>) FactorExpression() <MINUS> #minusOperator_AST SumExpression()
+  |LOOKAHEAD(FactorExpression()) FactorExpression())#binaryExpression_AST(>1)
+}
+
+void FactorExpression():{}
+{
+  
+  (LOOKAHEAD(UnaryExpression() <MULTIPLY>) UnaryExpression() <MULTIPLY> #multiplyOperator_AST FactorExpression()
+  |LOOKAHEAD(UnaryExpression() <DIVIDE>) UnaryExpression() <DIVIDE> #divideOperator_AST FactorExpression()
+  |LOOKAHEAD(UnaryExpression()) UnaryExpression())#binaryExpression_AST(>1)
+}
+
+void UnaryExpression():{}
+{
+  (<PLUS> #plusOperator_AST| <MINUS> #minusOperator_AST| <NOT> #notOperator_AST) Expression()
+  | Primary()
+}
+
+void Primary(): {}
+{
+  LOOKAHEAD(PrimaryExisting()) PrimaryExisting()
+  | LOOKAHEAD(NewArray()) NewArray()
+}
+
+void PrimaryExisting(): {}
+{
+  PrimaryExisting_1()  (PrimaryExisting_2())?
+}
+
+void PrimaryExisting_1():{}
+{
+  LOOKAHEAD(3)
+    Literal()
+  | LOOKAHEAD(3)
+    <THIS> #thisExpr_AST
+  | LOOKAHEAD(3)
+    <SUPER> #superExpr_AST
+  | LOOKAHEAD(3)
+    <LP> Expression() <RP>
+  | LOOKAHEAD(3)
+    <NEW> <ID> <LP> (ActualArguments())? <RP> #newClassExpr_AST
+  | LOOKAHEAD(3)
+    <ID>  <LP> (ActualArguments())? <RP> #methodExpr_AST
+  | LOOKAHEAD(3)
+    <ID> <LSB> Expression() <RSB> #arrayExpr_AST
+  | <ID> #idExpr_AST
+}
+
+void PrimaryExisting_2():{}
+{
+  LOOKAHEAD(< DOT > <ID > <LP> (ActualArguments())? <RP> PrimaryExisting_2())  
+      < DOT > <ID > <LP> (ActualArguments())? <RP> #methodExpr_AST PrimaryExisting_2()
+    | LOOKAHEAD(< DOT > <ID > PrimaryExisting_2())
+      < DOT > <ID > #fieldExpr_AST PrimaryExisting_2()
+    | LOOKAHEAD(< DOT > <ID > <LSB> Expression() <RSB> PrimaryExisting_2())
+      < DOT > <ID > <LSB> Expression() <RSB> #arrayExpr_AST PrimaryExisting_2()
+    | LOOKAHEAD(3)
+      < DOT > <ID > <LSB> Expression() <RSB> #arrayExpr_AST
+    | LOOKAHEAD(3)
+      < DOT > <ID > <LP> (ActualArguments())? <RP> #methodExpr_AST
+    | < DOT > <ID > #fieldExpr_AST
+}
+
+void NewArray():{}
+{
+  <NEW> Type() <LSB> Expression() <RSB>
 }
