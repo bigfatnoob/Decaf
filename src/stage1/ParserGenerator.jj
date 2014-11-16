@@ -193,7 +193,7 @@ void Type2():{}{
 
 void PrimitiveType():{}
 {
-  <BOOLEAN> | <CHAR> | <INTEGER> | <VOID>  
+  <BOOLEAN> | <CHAR> | <INT> | <VOID>  
 }
 
 void VarDeclaratorList():{}

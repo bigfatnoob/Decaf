@@ -7,20 +7,27 @@ import java.util.List;
 public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants {/*@bgen(jjtree)*/
   protected static JJTDecafState jjtree = new JJTDecafState();public static void main(String args [])
   {
-    System.out.println("Reading from standard input...");
-    System.out.print("Enter an expression like \u005c"1+(2+3)*var;\u005c" :");
-    Decaf parser = new Decaf(System.in);
+    Decaf parser;
+    if (args.length == 1) {
+      try {
+        parser = new Decaf(new java.io.FileInputStream(args[0]));
+      } catch (java.io.FileNotFoundException e) {
+        System.out.println("File "+args[0]+ " not found," +
+            " reading from terminal instead");
+        parser = new Decaf(System.in);
+      }
+    } else {
+      System.out.println("Reading from standard input...");
+      parser =  new Decaf(System.in);
+    }
     try
     {
       List<Unit> units = parser.Start();
-      for (Unit unit: units) {
-        System.out.println("\u005cn");
-      }
-      System.out.println("Thank you.");
+      System.out.println("Parsed Successfully.");
     }
     catch (Exception e)
     {
-      System.out.println("Oops.");
+      System.out.println("Dagnabit.");
       System.out.println(e.getMessage());
     }
   }
@@ -2765,40 +2772,6 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
     finally { jj_save(66, xla); }
   }
 
-  static private boolean jj_3R_115() {
-    if (jj_3R_14()) return true;
-    if (jj_scan_token(DOT)) return true;
-    if (jj_scan_token(ID)) return true;
-    if (jj_scan_token(LSB)) return true;
-    if (jj_3R_10()) return true;
-    if (jj_scan_token(RSB)) return true;
-    return false;
-  }
-
-  static private boolean jj_3R_53() {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3R_115()) {
-    jj_scanpos = xsp;
-    if (jj_3R_116()) {
-    jj_scanpos = xsp;
-    if (jj_3R_117()) {
-    jj_scanpos = xsp;
-    if (jj_3R_118()) return true;
-    }
-    }
-    }
-    return false;
-  }
-
-  static private boolean jj_3R_13() {
-    if (jj_3R_53()) return true;
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3R_54()) jj_scanpos = xsp;
-    return false;
-  }
-
   static private boolean jj_3_7() {
     if (jj_3R_13()) return true;
     if (jj_scan_token(ASSIGN)) return true;
@@ -4500,6 +4473,40 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
     if (jj_3R_14()) return true;
     if (jj_scan_token(DOT)) return true;
     if (jj_scan_token(ID)) return true;
+    return false;
+  }
+
+  static private boolean jj_3R_115() {
+    if (jj_3R_14()) return true;
+    if (jj_scan_token(DOT)) return true;
+    if (jj_scan_token(ID)) return true;
+    if (jj_scan_token(LSB)) return true;
+    if (jj_3R_10()) return true;
+    if (jj_scan_token(RSB)) return true;
+    return false;
+  }
+
+  static private boolean jj_3R_53() {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3R_115()) {
+    jj_scanpos = xsp;
+    if (jj_3R_116()) {
+    jj_scanpos = xsp;
+    if (jj_3R_117()) {
+    jj_scanpos = xsp;
+    if (jj_3R_118()) return true;
+    }
+    }
+    }
+    return false;
+  }
+
+  static private boolean jj_3R_13() {
+    if (jj_3R_53()) return true;
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3R_54()) jj_scanpos = xsp;
     return false;
   }
 

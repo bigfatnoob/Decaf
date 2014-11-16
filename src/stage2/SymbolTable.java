@@ -51,6 +51,10 @@ public class SymbolTable {
 		return lastUnit;
 	}	
 	
+	/**
+	 * Method to update a record in the symbol table
+	 * @param tableEntry
+	 */
 	private void updateTable(TableEntry tableEntry) {
 		String name = tableEntry.getName();
 		List<TableEntry> tableEntries = table.get(name);
@@ -78,6 +82,11 @@ public class SymbolTable {
 		}
 	}
 	
+	/***
+	 * Method to clear symbol table entry for
+	 * a name
+	 * @param unit
+	 */
 	private void resetTableEntries(Unit unit) {
 		UnitType unitType = unit.getUnitType();
 		Unit lastUnit = unit.getLastNameUnit();

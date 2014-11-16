@@ -16,20 +16,27 @@ public class Decaf
 {
   public static void main(String args [])
   {
-    System.out.println("Reading from standard input...");
-    System.out.print("Enter an expression like \"1+(2+3)*var;\" :");
-    Decaf parser = new Decaf(System.in);
+    Decaf parser;
+    if (args.length == 1) {
+      try {
+        parser = new Decaf(new java.io.FileInputStream(args[0]));  
+      } catch (java.io.FileNotFoundException e) {
+        System.out.println("File "+args[0]+ " not found," +
+            " reading from terminal instead");
+        parser = new Decaf(System.in);
+      }
+    } else {
+      System.out.println("Reading from standard input...");
+      parser =  new Decaf(System.in);
+    }
     try
     {
       List<Unit> units = parser.Start();
-      for (Unit unit: units) {
-        System.out.println("\n");
-      }
-      System.out.println("Thank you.");
+      System.out.println("Parsed Successfully.");
     }
     catch (Exception e)
     {
-      System.out.println("Oops.");
+      System.out.println("Dagnabit.");
       System.out.println(e.getMessage());
     }
   }
