@@ -8,8 +8,15 @@ package stage2;
  *
  */
 public class VariableUnit extends Unit {
-	private SimpleNode type;
+	/**
+	 * public / private / protected / static
+	 */
 	private Modifier modifier;
+	/**
+	 * Variable type  
+	 */
+	private SimpleNode type;
+	
 	private boolean isArray;
 	
 	public SimpleNode getType() {

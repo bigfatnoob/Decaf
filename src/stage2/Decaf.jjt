@@ -231,8 +231,8 @@ Modifier Modifier():
   Modifier modifier = new Modifier();
 }
 {
-  [<PUBLIC>{modifier.setScopePublic(true);}|<PRIVATE>{modifier.setScopePrivate(true);}|<PROTECTED>{modifier.setScopeProtected(true);}]{return modifier;}
-  [<STATIC>{modifier.setScopeStatic(true);}]{return modifier;}
+  (<PUBLIC>{modifier.setScopePublic(true);}|<PRIVATE>{modifier.setScopePrivate(true);}|<PROTECTED>{modifier.setScopeProtected(true);})?
+  (<STATIC>{modifier.setScopeStatic(true);})? {return modifier;}
 }
 
 List<Unit> FieldDeclarations(FieldDetails fieldDetails):

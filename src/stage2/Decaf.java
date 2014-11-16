@@ -157,7 +157,6 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
       jj_la1[4] = jj_gen;
       ;
     }
-                                                                                                                                       {if (true) return modifier;}
     switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
     case STATIC:
       jj_consume_token(STATIC);
@@ -167,7 +166,7 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
       jj_la1[5] = jj_gen;
       ;
     }
-                                             {if (true) return modifier;}
+                                               {if (true) return modifier;}
     throw new Error("Missing return statement in function");
   }
 

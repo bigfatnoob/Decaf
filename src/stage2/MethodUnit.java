@@ -10,9 +10,29 @@ import java.util.List;
  *
  */
 public class MethodUnit extends Unit {
+	/**
+	 * public / private / protected / static
+	 */
 	private Modifier modifier;
+	/**
+	 * Think kinda obvious 
+	 */
 	private SimpleNode returnType;
+	/***
+	 * Think kinda obvious
+	 */
 	private List<Unit> formalArgs;
+	/***
+	 * All Statements in the function
+	 */
+	private List<SimpleNode> statements;
+	
+	private boolean isFormalArgument;
+	
+	private boolean isLocalVariable;
+	
+	private boolean isConstructor;
+	
 	public Modifier getModifier() {
 		return modifier;
 	}
@@ -30,6 +50,30 @@ public class MethodUnit extends Unit {
 	}
 	public void setFormalArgs(List<Unit> formalArgs) {
 		this.formalArgs = formalArgs;
+	}
+	public List<SimpleNode> getStatements() {
+		return statements;
+	}
+	public void setStatements(List<SimpleNode> statements) {
+		this.statements = statements;
+	}
+	public boolean isConstructor() {
+		return isConstructor;
+	}
+	public void setConstructor(boolean isConstructor) {
+		this.isConstructor = isConstructor;
+	}
+	public boolean isFormalArgument() {
+		return isFormalArgument;
+	}
+	public void setFormalArgument(boolean isFormalArgument) {
+		this.isFormalArgument = isFormalArgument;
+	}
+	public boolean isLocalVariable() {
+		return isLocalVariable;
+	}
+	public void setLocalVariable(boolean isLocalVariable) {
+		this.isLocalVariable = isLocalVariable;
 	}
 	
 	
