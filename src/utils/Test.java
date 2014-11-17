@@ -1,20 +1,21 @@
 package utils;
 
+import java.io.File;
+
+import stage2.Decaf;
+
 public class Test {
 	
-	public static void doubleIt(DummyInt dummyInt) {
-		dummyInt.integer = 2 * dummyInt.integer;
-	}
+	public final static String FOLDER_PATH = "X:/NCSU/CSC-512 Compilers/Project/NewDecafTestCases/";
 	
-	public class DummyInt{
-		Integer integer;
-	}
-	
-	public static void main(String[] args) {
-		DummyInt dummyInt = new Test().new DummyInt();
-		dummyInt.integer = 5;
-		doubleIt(dummyInt);
-		System.out.println(dummyInt.integer);
+	static public void main(String[] args) {
+		final File folder = new File(FOLDER_PATH);
+		String[] mainArgs = new String[1];
+		for (final File file: folder.listFiles()) {
+			System.out.println(file.getName());
+			mainArgs[0] = FOLDER_PATH+file.getName();
+			Decaf.main(mainArgs);
+		}
 	}
 }
 
