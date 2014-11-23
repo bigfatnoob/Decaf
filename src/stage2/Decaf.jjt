@@ -42,6 +42,9 @@ public class Decaf
     {
       start = parser.Start();
       System.out.println("Parsed Successfully.");
+      MODE = 1;
+      parser = new Decaf(new java.io.FileInputStream(args[0]));
+      start = parser.Start();
       ScopeFactory sf = ScopeFactory.getScopeFactory();
       /*for(String key: SYMBOL_TABLE.getTable().keySet()) {
         System.out.println(SYMBOL_TABLE.getTable().get(key));      }*/
@@ -200,13 +203,13 @@ start_AST Start() #start_AST:
   List<Unit> classUnitList = new ArrayList<Unit >();
 }
 {
-  {SYMBOL_TABLE.enterScope(true);
+  {SYMBOL_TABLE.enterScope(true, MODE);
   if (MODE==1) {	  SYMBOL_TABLE.add("String", UnitType.CLASS);
 	  SYMBOL_TABLE.add("IO", UnitType.CLASS);
 	  SYMBOL_TABLE.add("Object", UnitType.CLASS);}
   }
   (classUnit = Class(){classUnitList.add(classUnit);})*
-  {SYMBOL_TABLE.exitScope();}
+  {SYMBOL_TABLE.exitScope(MODE);}
   <EOF>
   {
     //jjtThis.setClasses(classUnitList);
@@ -233,21 +236,21 @@ Unit Class():
 		    classUnit = (ClassUnit) SYMBOL_TABLE.add(className, UnitType.CLASS);
 		    if (superClassName != null) {
 		      IntegerMuted intMuted = new IntegerMuted(-1);
-		      superClassUnit = (ClassUnit)SYMBOL_TABLE.find(superClassName, UnitType.CLASS, intMuted);
+		      superClassUnit = (ClassUnit)SYMBOL_TABLE.lookUp(superClassName, UnitType.CLASS, intMuted);
 		      if (superClassUnit == null){
 		        throw new ParseException("Super class " + superClassName + " has not been declared.");		      }
 		      classUnit.setSuperClass(superClassUnit);		    }
         }
     }
     <LCB>
-    {SYMBOL_TABLE.enterScopeForUnit(classUnit);}
+    {SYMBOL_TABLE.enterScopeForUnit(classUnit,MODE);}
     (classFields = Member(){classFieldsCollection.addAll(classFields);})*
     {
       if (MODE == 1) {        classUnit.setMembersAndMethods(classFields);
       }    }
     <RCB>
     {
-      SYMBOL_TABLE.exitScope();
+      SYMBOL_TABLE.exitScope(MODE);
       return classUnit;    }
 }
 
@@ -323,7 +326,7 @@ SimpleNode Type():{
   |t = <BOOLEAN> {return jjtThis;} #boolean_AST
   |t = <ID> {
     IntegerMuted currentScope = new IntegerMuted();
-    if (MODE == 1){		varUnit = (ClassUnit) SYMBOL_TABLE.find(t.image,UnitType.CLASS, currentScope);
+    if (MODE == 1){		varUnit = (ClassUnit) SYMBOL_TABLE.lookUp(t.image,UnitType.CLASS, currentScope);
 		if (varUnit == null){
 		  throw new ParseException(t.image + " has not been declared yet");		}
 		varUnit.setType(jjtThis);
@@ -383,11 +386,11 @@ Unit Method():{
   <LP>
   {
     methodUnit.setName(functionName);
-    SYMBOL_TABLE.enterScopeForUnit(methodUnit);  }
+    SYMBOL_TABLE.enterScopeForUnit(methodUnit, MODE);  }
   ((formalArgs = FormalArgs()){methodUnit.setFormalArgs(formalArgs);})?
   <RP>
   {
-    SYMBOL_TABLE.exitScope();
+    SYMBOL_TABLE.exitScope(MODE);
   }
   Block()//Handle Scoping here
   {return methodUnit;}
@@ -407,12 +410,12 @@ Unit Ctor():{
   {
     methodUnit.setName(functionName);
     methodUnit.setConstructor(true);
-    SYMBOL_TABLE.enterScopeForUnit(methodUnit);
+    SYMBOL_TABLE.enterScopeForUnit(methodUnit,MODE);
   }
   (formalArgs = FormalArgs(){methodUnit.setFormalArgs(formalArgs);})?
   <RP>
   {
-    SYMBOL_TABLE.exitScope();
+    SYMBOL_TABLE.exitScope(MODE);
   }
   Block()//Handle Scoping here
   {return methodUnit;}
@@ -445,12 +448,12 @@ void Block() #block_AST:{
 {
   <LCB>
   {
-    SYMBOL_TABLE.enterScope(false);
+    SYMBOL_TABLE.enterScope(false, MODE);
   }
   (Statement())*
   <RCB>
   {
-    SYMBOL_TABLE.exitScope();
+    SYMBOL_TABLE.exitScope(MODE);
   }
 }
 

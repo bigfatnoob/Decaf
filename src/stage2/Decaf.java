@@ -29,6 +29,9 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
     {
       start = parser.Start();
       System.out.println("Parsed Successfully.");
+      MODE = 1;
+      parser = new Decaf(new java.io.FileInputStream(args[0]));
+      start = parser.Start();
       ScopeFactory sf = ScopeFactory.getScopeFactory();
       /*for(String key: SYMBOL_TABLE.getTable().keySet()) {
         System.out.println(SYMBOL_TABLE.getTable().get(key));      }*/
@@ -56,7 +59,7 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
   jjtree.openNodeScope(jjtn000);Unit classUnit = null;
   List<Unit> classUnitList = new ArrayList<Unit >();
     try {
-   SYMBOL_TABLE.enterScope(true);
+   SYMBOL_TABLE.enterScope(true, MODE);
   if (MODE==1) {
           SYMBOL_TABLE.add("String", UnitType.CLASS);
           SYMBOL_TABLE.add("IO", UnitType.CLASS);
@@ -74,7 +77,7 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
         classUnit = Class();
                        classUnitList.add(classUnit);
       }
-   SYMBOL_TABLE.exitScope();
+   SYMBOL_TABLE.exitScope(MODE);
       jj_consume_token(0);
     jjtree.closeNodeScope(jjtn000, true);
     jjtc000 = false;
@@ -127,7 +130,7 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
                     classUnit = (ClassUnit) SYMBOL_TABLE.add(className, UnitType.CLASS);
                     if (superClassName != null) {
                       IntegerMuted intMuted = new IntegerMuted(-1);
-                      superClassUnit = (ClassUnit)SYMBOL_TABLE.find(superClassName, UnitType.CLASS, intMuted);
+                      superClassUnit = (ClassUnit)SYMBOL_TABLE.lookUp(superClassName, UnitType.CLASS, intMuted);
                       if (superClassUnit == null){
                         {if (true) throw new ParseException("Super class " + superClassName + " has not been declared.");}
                       }
@@ -135,7 +138,7 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
                     }
         }
     jj_consume_token(LCB);
-     SYMBOL_TABLE.enterScopeForUnit(classUnit);
+     SYMBOL_TABLE.enterScopeForUnit(classUnit,MODE);
     label_2:
     while (true) {
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
@@ -161,7 +164,7 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
         classUnit.setMembersAndMethods(classFields);
       }
     jj_consume_token(RCB);
-      SYMBOL_TABLE.exitScope();
+      SYMBOL_TABLE.exitScope(MODE);
       {if (true) return classUnit;}
     throw new Error("Missing return statement in function");
   }
@@ -371,7 +374,7 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
               jjtc004 = false;
     IntegerMuted currentScope = new IntegerMuted();
     if (MODE == 1){
-                varUnit = (ClassUnit) SYMBOL_TABLE.find(t.image,UnitType.CLASS, currentScope);
+                varUnit = (ClassUnit) SYMBOL_TABLE.lookUp(t.image,UnitType.CLASS, currentScope);
                 if (varUnit == null){
                   {if (true) throw new ParseException(t.image + " has not been declared yet");}
                 }
@@ -517,7 +520,7 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
     functionName = ID();
     jj_consume_token(LP);
     methodUnit.setName(functionName);
-    SYMBOL_TABLE.enterScopeForUnit(methodUnit);
+    SYMBOL_TABLE.enterScopeForUnit(methodUnit, MODE);
     switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
     case BOOLEAN:
     case CHAR:
@@ -531,7 +534,7 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
       ;
     }
     jj_consume_token(RP);
-    SYMBOL_TABLE.exitScope();
+    SYMBOL_TABLE.exitScope(MODE);
     Block();
    {if (true) return methodUnit;}
     throw new Error("Missing return statement in function");
@@ -549,7 +552,7 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
     jj_consume_token(LP);
     methodUnit.setName(functionName);
     methodUnit.setConstructor(true);
-    SYMBOL_TABLE.enterScopeForUnit(methodUnit);
+    SYMBOL_TABLE.enterScopeForUnit(methodUnit,MODE);
     switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
     case BOOLEAN:
     case CHAR:
@@ -563,7 +566,7 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
       ;
     }
     jj_consume_token(RP);
-    SYMBOL_TABLE.exitScope();
+    SYMBOL_TABLE.exitScope(MODE);
     Block();
    {if (true) return methodUnit;}
     throw new Error("Missing return statement in function");
@@ -623,7 +626,7 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
   jjtree.openNodeScope(jjtn000);
     try {
       jj_consume_token(LCB);
-    SYMBOL_TABLE.enterScope(false);
+    SYMBOL_TABLE.enterScope(false, MODE);
       label_9:
       while (true) {
         switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
@@ -662,7 +665,7 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
       jj_consume_token(RCB);
     jjtree.closeNodeScope(jjtn000, true);
     jjtc000 = false;
-    SYMBOL_TABLE.exitScope();
+    SYMBOL_TABLE.exitScope(MODE);
     } catch (Throwable jjte000) {
     if (jjtc000) {
       jjtree.clearNodeScope(jjtn000);

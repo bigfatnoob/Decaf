@@ -111,7 +111,7 @@ public class SymbolTable {
 		}
 	}
 	
-	public Unit find(String name, UnitType type, IntegerMuted scopeLevel) {
+	public Unit lookUp(String name, UnitType type, IntegerMuted scopeLevel) {
 		List<TableEntry> tableEntries = table.get(name);
 		if ((tableEntries ==  null) || (tableEntries.size() == 0))
 			return null;
@@ -141,7 +141,7 @@ public class SymbolTable {
 	public Unit add(String name, UnitType type) {
 		IntegerMuted currentScope = new IntegerMuted(-1);
 		
-		Unit unit = find(name, type, currentScope);
+		Unit unit = lookUp(name, type, currentScope);
 		if (unit != null && currentScope.getValue().equals(1))
 			throw new RuntimeException(type.getName() + " " + name + " already declared");
 		
@@ -169,14 +169,14 @@ public class SymbolTable {
 		return unit;
 	}
 	
-	public void enterScope(boolean isProgramStart) {
+	public void enterScope(boolean isProgramStart, int MODE) {
 		ScopeFactory scopeFactory = ScopeFactory.getScopeFactory();
-		scopeFactory.enterNewScope(isProgramStart);
+		scopeFactory.enterNewScope(isProgramStart, MODE);
 	}
 	
-	public void exitScope() {
+	public void exitScope(int MODE) {
 		ScopeFactory scopeFactory = ScopeFactory.getScopeFactory();
-		ScopeUnit scopeUnit = scopeFactory.exitLastScope();
+		ScopeUnit scopeUnit = scopeFactory.exitLastScope(MODE);
 		Unit lastUnit = scopeUnit.getUnit();
 		
 		/*while (lastUnit != null) {
@@ -185,8 +185,8 @@ public class SymbolTable {
 		}*/
 	}
 	
-	public void enterScopeForUnit(Unit unit) {
+	public void enterScopeForUnit(Unit unit, int MODE) {
 		ScopeFactory scopeFactory = ScopeFactory.getScopeFactory();
-		scopeFactory.enterNewScopeForUnit(unit);
+		scopeFactory.enterNewScopeForUnit(unit, MODE);
 	}
 }

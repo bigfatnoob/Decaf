@@ -16,6 +16,7 @@ public class ScopeElement {
 	private int level;
 	private boolean isBlock;
 	private boolean isProgram;
+	private IntegerMuted kidLevel = new IntegerMuted();
 	
 	public ScopeElement(){
 		kids = new ArrayList<ScopeElement>();
@@ -72,5 +73,13 @@ public class ScopeElement {
 
 	public void setBlock(boolean isBlock) {
 		this.isBlock = isBlock;
+	}
+
+	public IntegerMuted getKidLevel() {
+		return kidLevel;
+	}
+
+	public void setKidLevel(int kidLvlVal) {
+		this.kidLevel.setValue(kidLvlVal);
 	}
 }
