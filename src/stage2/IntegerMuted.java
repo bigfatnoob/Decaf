@@ -15,6 +15,10 @@ public class IntegerMuted {
 		this.value = value;
 	}
 	
+	public IntegerMuted(){
+		this.value = 0;
+	}
+	
 	public Integer getValue() {
 		return value;
 	}

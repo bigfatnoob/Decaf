@@ -19,6 +19,10 @@ public class VariableUnit extends Unit {
 	
 	private boolean isArray;
 	
+	private boolean isFormalArgument;
+	
+	private boolean isLocalVariable;
+	
 	public SimpleNode getType() {
 		return type;
 	}
@@ -36,6 +40,18 @@ public class VariableUnit extends Unit {
 	}
 	public void setArray(boolean isArray) {
 		this.isArray = isArray;
+	}
+	public boolean isFormalArgument() {
+		return isFormalArgument;
+	}
+	public void setFormalArgument(boolean isFormalArgument) {
+		this.isFormalArgument = isFormalArgument;
+	}
+	public boolean isLocalVariable() {
+		return isLocalVariable;
+	}
+	public void setLocalVariable(boolean isLocalVariable) {
+		this.isLocalVariable = isLocalVariable;
 	}
 	
 }

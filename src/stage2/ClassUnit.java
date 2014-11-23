@@ -23,6 +23,8 @@ public class ClassUnit extends Unit {
 	 */
 	private List<Unit> membersAndMethods;
 	
+	private SimpleNode type;
+	
 	public Modifier getModifier() {
 		return modifier;
 	}
@@ -40,5 +42,11 @@ public class ClassUnit extends Unit {
 	}
 	public void setMembersAndMethods(List<Unit> membersAndMethods) {
 		this.membersAndMethods = membersAndMethods;
+	}
+	public SimpleNode getType() {
+		return type;
+	}
+	public void setType(SimpleNode type) {
+		this.type = type;
 	}
 }

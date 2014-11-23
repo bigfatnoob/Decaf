@@ -19,6 +19,10 @@ public class SymbolTable {
 		table = new HashMap<String, List<TableEntry>>();
 	}
 	
+	public Map<String, List<TableEntry>> getTable(){
+		return table;
+	}
+	
 	/***
 	 * Return the most deep Unit with a
 	 * given name.
@@ -67,7 +71,7 @@ public class SymbolTable {
 		
 		TableEntry existingTableEntry = null;
 		for (TableEntry tblEntry: tableEntries) {
-			if (!tblEntry.getName().equals(name)) {
+			if (tblEntry.getName().equals(name)) {
 				existingTableEntry = tblEntry;
 				break;
 			}
@@ -143,11 +147,12 @@ public class SymbolTable {
 		
 		TableEntry tableEntry = new TableEntry();
 		unit = UnitFactory.generateUnit(type);
+		unit.setName(name);
 		ScopeFactory scopeFactory = ScopeFactory.getScopeFactory();
 		ScopeUnit currentScopeUnit = scopeFactory.getCurrentScopeElement();
 		Unit currentUnit = currentScopeUnit.getUnit();
 		
-		currentScopeUnit.setUnit(unit);
+		currentScopeUnit.setUnit(unit);	
 		Unit lastNameUnit = getLastUnit(name);
 		
 		unit.setLastNameUnit(lastNameUnit);
@@ -164,9 +169,9 @@ public class SymbolTable {
 		return unit;
 	}
 	
-	public void enterScope() {
+	public void enterScope(boolean isProgramStart) {
 		ScopeFactory scopeFactory = ScopeFactory.getScopeFactory();
-		scopeFactory.enterNewScope();
+		scopeFactory.enterNewScope(isProgramStart);
 	}
 	
 	public void exitScope() {
@@ -174,9 +179,14 @@ public class SymbolTable {
 		ScopeUnit scopeUnit = scopeFactory.exitLastScope();
 		Unit lastUnit = scopeUnit.getUnit();
 		
-		while (lastUnit != null) {
+		/*while (lastUnit != null) {
 			resetTableEntries(lastUnit);
 			lastUnit = lastUnit.getParentScopeUnit();
-		}
+		}*/
+	}
+	
+	public void enterScopeForUnit(Unit unit) {
+		ScopeFactory scopeFactory = ScopeFactory.getScopeFactory();
+		scopeFactory.enterNewScopeForUnit(unit);
 	}
 }

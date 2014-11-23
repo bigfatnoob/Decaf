@@ -8,8 +8,8 @@ package stage2;
  *
  */
 public enum UnitType {
-	METHOD(1, "class"),
-	CLASS(2, "method"),
+	METHOD(1, "method"),
+	CLASS(2, "class"),
 	VARIABLE(3, "variable");
 	
 	private int value;

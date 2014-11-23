@@ -87,4 +87,9 @@ public class Unit {
 	public void setLastNameUnit(Unit lastNameUnit) {
 		this.lastNameUnit = lastNameUnit;
 	}
+	
+	@Override
+	public String toString() {
+		return unitType.getName() + " : " + name;
+	}
 }

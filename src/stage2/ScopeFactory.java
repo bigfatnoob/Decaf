@@ -41,9 +41,14 @@ public class ScopeFactory {
 		return blockScopeLevel;
 	}
 	
-	public ScopeUnit enterNewScope() {
+	public ScopeUnit enterNewScope(boolean isProgramStart) {
 		ScopeElement newScope = new ScopeElement();
 		ScopeUnit newScopeUnit = new ScopeUnit();
+		if (isProgramStart) {
+			newScope.setProgram(true);
+		} else {
+			newScope.setBlock(true);
+		}
 		currentScope.addKid(newScope);
 		newScope.setScopeUnit(newScopeUnit);
 		newScope.setLevel(blockScopeLevel);
@@ -60,4 +65,19 @@ public class ScopeFactory {
 		currentScope = currentScope.getParent();
 		return lastScopeUnit;
 	}
+	
+	public ScopeUnit enterNewScopeForUnit(Unit unit) {
+		ScopeElement newScope = new ScopeElement();
+		ScopeUnit newScopeUnit = new ScopeUnit();
+		newScopeUnit.setUnit(unit);
+		currentScope.addKid(newScope);
+		newScope.setScopeUnit(newScopeUnit);
+		newScope.setLevel(blockScopeLevel);
+		currentScope = newScope;
+		
+		blockScopeLevel++;
+		return newScopeUnit; 
+	}
+	
+	
 }

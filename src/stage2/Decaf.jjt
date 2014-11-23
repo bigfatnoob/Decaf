@@ -12,10 +12,17 @@ options
 
 PARSER_BEGIN(Decaf)
 package stage2;
-
+import java.util.*;
 public class Decaf
 {
-  public static void main(String args [])
+  public static SymbolTable SYMBOL_TABLE = new SymbolTable();
+  /**
+  * Mode = 0 represents scope construction
+    Mode = 1 represents symbol table construction 
+  */
+  public static int MODE = 0;
+  
+  public static void main(String args []) throws Exception
   {
     Decaf parser;
     if (args.length == 1) {
@@ -35,12 +42,15 @@ public class Decaf
     {
       start = parser.Start();
       System.out.println("Parsed Successfully.");
+      ScopeFactory sf = ScopeFactory.getScopeFactory();
+      /*for(String key: SYMBOL_TABLE.getTable().keySet()) {
+        System.out.println(SYMBOL_TABLE.getTable().get(key));      }*/
       //start.dump(" -> ");
     }
     catch (Exception e)
     {
-      System.out.println("Dagnabit.");
-      System.out.println(e.getMessage());
+      System.out.println("ERROR : " + e.getMessage());
+      throw e;
     }
     
   }
@@ -190,7 +200,14 @@ start_AST Start() #start_AST:
   List<Unit> classUnitList = new ArrayList<Unit >();
 }
 {
-  (classUnit = Class(){classUnitList.add(classUnit);})*<EOF>
+  {SYMBOL_TABLE.enterScope(true);
+  if (MODE==1) {	  SYMBOL_TABLE.add("String", UnitType.CLASS);
+	  SYMBOL_TABLE.add("IO", UnitType.CLASS);
+	  SYMBOL_TABLE.add("Object", UnitType.CLASS);}
+  }
+  (classUnit = Class(){classUnitList.add(classUnit);})*
+  {SYMBOL_TABLE.exitScope();}
+  <EOF>
   {
     //jjtThis.setClasses(classUnitList);
     return jjtThis;
@@ -199,18 +216,39 @@ start_AST Start() #start_AST:
 
 Unit Class():
 {
-  Unit classUnit = null;
+  ClassUnit classUnit = null;
+  ClassUnit superClassUnit = null;
   List<Unit> classFields = new ArrayList<Unit>();
   List<Unit> classFieldsCollection = new ArrayList<Unit>();
+  String className = null;
+  String superClassName = null;
 }
 {
-  <CLASS> <ID> (< EXTENDS > < ID>)? <LCB>
-    (classFields = Member(){classFieldsCollection.addAll(classFields);})*<RCB>
+  <CLASS> className = ID() (< EXTENDS > superClassName = ID())? 
     {
-        classUnit = new Unit();
-        // Symbol table insertion to be performed
-        return classUnit;
+        if  (MODE == 0){
+          classUnit = (ClassUnit)UnitFactory.generateUnit(UnitType.CLASS);
+          classUnit.setName(className);
+        } else {
+		    classUnit = (ClassUnit) SYMBOL_TABLE.add(className, UnitType.CLASS);
+		    if (superClassName != null) {
+		      IntegerMuted intMuted = new IntegerMuted(-1);
+		      superClassUnit = (ClassUnit)SYMBOL_TABLE.find(superClassName, UnitType.CLASS, intMuted);
+		      if (superClassUnit == null){
+		        throw new ParseException("Super class " + superClassName + " has not been declared.");		      }
+		      classUnit.setSuperClass(superClassUnit);		    }
+        }
     }
+    <LCB>
+    {SYMBOL_TABLE.enterScopeForUnit(classUnit);}
+    (classFields = Member(){classFieldsCollection.addAll(classFields);})*
+    {
+      if (MODE == 1) {        classUnit.setMembersAndMethods(classFields);
+      }    }
+    <RCB>
+    {
+      SYMBOL_TABLE.exitScope();
+      return classUnit;    }
 }
 
 List<Unit> Member():
@@ -225,7 +263,11 @@ List<Unit> Member():
   |LOOKAHEAD(10)
   member = Method(){allMembers.add(member); return allMembers;}
   |LOOKAHEAD(10)
-  member = Ctor(){allMembers.add(member); return allMembers;}
+  member = Ctor(){
+    MethodUnit cMember = (MethodUnit)member;
+    cMember.setConstructor(true);
+    allMembers.add(cMember); return allMembers;
+  }
 }
 
 List<Unit> Field():
@@ -236,7 +278,13 @@ List<Unit> Field():
 }
 {
   modifier = Modifier(){fieldDetails.setModifier(modifier);}
-  fieldList = FieldDeclarations(fieldDetails){return fieldList;}
+  fieldList = FieldDeclarations(fieldDetails)
+  {
+    for(Unit fieldUnit: fieldList){
+      VariableUnit vUnit = (VariableUnit) fieldUnit;
+      vUnit.setLocalVariable(true);    }
+    return fieldList;
+  }
 }
 
 Modifier Modifier():
@@ -257,19 +305,31 @@ List<Unit> FieldDeclarations(FieldDetails fieldDetails):
   List<Unit> variables = null;
 }
 {
-  type = Type(){fieldDetails.setType(type);}
+  type = Type(){
+    jjtree.popNode();
+    fieldDetails.setType(type);
+  }
   (< LSB > < RSB >)*
   variables = Variables(fieldDetails)<SCOLON>{return variables;}
 }
 
 SimpleNode Type():{
   Token t = null;
+  ClassUnit varUnit = null;
 }
 {
   (t = <INT> {return jjtThis;} #int_AST 
   |t = <CHAR> {return jjtThis;} #char_AST
   |t = <BOOLEAN> {return jjtThis;} #boolean_AST
-  |t = <ID> {return jjtThis;} #id_AST)
+  |t = <ID> {
+    IntegerMuted currentScope = new IntegerMuted();
+    if (MODE == 1){		varUnit = (ClassUnit) SYMBOL_TABLE.find(t.image,UnitType.CLASS, currentScope);
+		if (varUnit == null){
+		  throw new ParseException(t.image + " has not been declared yet");		}
+		varUnit.setType(jjtThis);
+    }
+    return jjtThis;
+  } #id_AST)
   }
 
 List<Unit> Variables(FieldDetails fieldDetails):{
@@ -282,17 +342,25 @@ List<Unit> Variables(FieldDetails fieldDetails):{
 }
 
 Unit Variable(FieldDetails fieldDetails):{
-  VariableUnit variable = new VariableUnit();
+  VariableUnit variable;
   String variableName = null;
 }
 {
-  variableName = ID(){variable.setName(variableName);}(<LSB><RSB>{variable.setArray(true);})*
-  (<ASSIGN> #assignOperator_AST Expression())?
+  variableName = ID(){
+    if (MODE == 1) {	    variable = (VariableUnit)SYMBOL_TABLE.add(variableName, UnitType.VARIABLE);
+    } else {
+        variable = new VariableUnit();    }
+  }
+  (<LSB><RSB>{variable.setArray(true);})*
+  (<ASSIGN> #assignOperator_AST Expression()
+    // TODO -- Store value of variable
+  )?
   {
-    variable.setType(fieldDetails.getType());
-    variable.setModifier(fieldDetails.getModifier());
+    if (MODE == 1) {
+	    variable.setType(fieldDetails.getType());
+	    variable.setModifier(fieldDetails.getModifier());
+    }
     return variable; 
-    // Symbol table insertion
   }
 }
 
@@ -301,13 +369,26 @@ Unit Method():{
   Modifier modifier = null;
   SimpleNode type = null;
   List<Unit> formalArgs = null;
-  Token t = null;
+  String methodName = null;
+  SimpleNode block = null;
+  String functionName = null;
 }
 {
-  modifier = Modifier(){methodUnit.setModifier(modifier);} 
-  ( type = Type() | < VOID > #voidType_AST /*{type = jjtThis; }*/ )//{methodUnit.setReturnType(type);}
+  modifier = Modifier()
+  
+  {methodUnit.setModifier(modifier);} 
+  ( type = Type() | < VOID > {type = jjtThis; }  #voidType_AST)//{methodUnit.setReturnType(type);}
   (< LSB > < RSB >)*
-  ID() <LP> ((formalArgs = FormalArgs()){methodUnit.setFormalArgs(formalArgs);})?<RP>
+  functionName = ID()
+  <LP>
+  {
+    methodUnit.setName(functionName);
+    SYMBOL_TABLE.enterScopeForUnit(methodUnit);  }
+  ((formalArgs = FormalArgs()){methodUnit.setFormalArgs(formalArgs);})?
+  <RP>
+  {
+    SYMBOL_TABLE.exitScope();
+  }
   Block()//Handle Scoping here
   {return methodUnit;}
 }
@@ -317,10 +398,22 @@ Unit Ctor():{
   Modifier modifier = null;
   List<Unit> formalArgs = null;
   Token t = null;
+  String functionName = null;
 }
 {
   modifier = Modifier(){methodUnit.setModifier(modifier);}
-  ID()<LP>(formalArgs = FormalArgs(){methodUnit.setFormalArgs(formalArgs);})?<RP>
+  functionName = ID()
+  <LP>
+  {
+    methodUnit.setName(functionName);
+    methodUnit.setConstructor(true);
+    SYMBOL_TABLE.enterScopeForUnit(methodUnit);
+  }
+  (formalArgs = FormalArgs(){methodUnit.setFormalArgs(formalArgs);})?
+  <RP>
+  {
+    SYMBOL_TABLE.exitScope();
+  }
   Block()//Handle Scoping here
   {return methodUnit;}
 }
@@ -350,7 +443,15 @@ Unit FormalArg():{
 void Block() #block_AST:{
 }
 {
-  <LCB>(Statement())*<RCB>
+  <LCB>
+  {
+    SYMBOL_TABLE.enterScope(false);
+  }
+  (Statement())*
+  <RCB>
+  {
+    SYMBOL_TABLE.exitScope();
+  }
 }
 
 void Statement():{
