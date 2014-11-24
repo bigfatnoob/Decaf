@@ -45,7 +45,7 @@ public class Decaf
       MODE = 1;
       parser = new Decaf(new java.io.FileInputStream(args[0]));
       start = parser.Start();
-      ScopeFactory sf = ScopeFactory.getScopeFactory();
+      //ScopeFactory sf = ScopeFactory.getScopeFactory();
       /*for(String key: SYMBOL_TABLE.getTable().keySet()) {
         System.out.println(SYMBOL_TABLE.getTable().get(key));      }*/
       //start.dump(" -> ");
@@ -204,7 +204,7 @@ start_AST Start() #start_AST:
 }
 {
   {SYMBOL_TABLE.enterScope(true, MODE);
-  if (MODE==1) {	  SYMBOL_TABLE.add("String", UnitType.CLASS);
+  if (MODE==0) {	  SYMBOL_TABLE.add("String", UnitType.CLASS);
 	  SYMBOL_TABLE.add("IO", UnitType.CLASS);
 	  SYMBOL_TABLE.add("Object", UnitType.CLASS);}
   }
@@ -230,10 +230,12 @@ Unit Class():
   <CLASS> className = ID() (< EXTENDS > superClassName = ID())? 
     {
         if  (MODE == 0){
-          classUnit = (ClassUnit)UnitFactory.generateUnit(UnitType.CLASS);
-          classUnit.setName(className);
+          /*classUnit = (ClassUnit)UnitFactory.generateUnit(UnitType.CLASS);
+          classUnit.setName(className);*/
+          classUnit = (ClassUnit) SYMBOL_TABLE.add(className, UnitType.CLASS);
         } else {
-		    classUnit = (ClassUnit) SYMBOL_TABLE.add(className, UnitType.CLASS);
+            IntegerMuted intBaseMuted = new IntegerMuted(-1);
+		    classUnit = (ClassUnit) SYMBOL_TABLE.lookUp(className, UnitType.CLASS, intBaseMuted);
 		    if (superClassName != null) {
 		      IntegerMuted intMuted = new IntegerMuted(-1);
 		      superClassUnit = (ClassUnit)SYMBOL_TABLE.lookUp(superClassName, UnitType.CLASS, intMuted);
@@ -246,7 +248,8 @@ Unit Class():
     {SYMBOL_TABLE.enterScopeForUnit(classUnit,MODE);}
     (classFields = Member(){classFieldsCollection.addAll(classFields);})*
     {
-      if (MODE == 1) {        classUnit.setMembersAndMethods(classFields);
+      //classUnit.setMembersAndMethods(classFields);
+      if (MODE == 0) {        classUnit.setMembersAndMethods(classFields);
       }    }
     <RCB>
     {
@@ -350,9 +353,10 @@ Unit Variable(FieldDetails fieldDetails):{
 }
 {
   variableName = ID(){
-    if (MODE == 1) {	    variable = (VariableUnit)SYMBOL_TABLE.add(variableName, UnitType.VARIABLE);
+    if (MODE == 0) {	    variable = (VariableUnit)SYMBOL_TABLE.add(variableName, UnitType.VARIABLE);
     } else {
-        variable = new VariableUnit();    }
+        IntegerMuted intMuted = new IntegerMuted(-1);
+        variable = (VariableUnit)SYMBOL_TABLE.lookUp(variableName, UnitType.VARIABLE, intMuted);    }
   }
   (<LSB><RSB>{variable.setArray(true);})*
   (<ASSIGN> #assignOperator_AST Expression()

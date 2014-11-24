@@ -32,7 +32,7 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
       MODE = 1;
       parser = new Decaf(new java.io.FileInputStream(args[0]));
       start = parser.Start();
-      ScopeFactory sf = ScopeFactory.getScopeFactory();
+      //ScopeFactory sf = ScopeFactory.getScopeFactory();
       /*for(String key: SYMBOL_TABLE.getTable().keySet()) {
         System.out.println(SYMBOL_TABLE.getTable().get(key));      }*/
       //start.dump(" -> ");
@@ -60,7 +60,7 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
   List<Unit> classUnitList = new ArrayList<Unit >();
     try {
    SYMBOL_TABLE.enterScope(true, MODE);
-  if (MODE==1) {
+  if (MODE==0) {
           SYMBOL_TABLE.add("String", UnitType.CLASS);
           SYMBOL_TABLE.add("IO", UnitType.CLASS);
           SYMBOL_TABLE.add("Object", UnitType.CLASS);}
@@ -124,10 +124,12 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
       ;
     }
         if  (MODE == 0){
-          classUnit = (ClassUnit)UnitFactory.generateUnit(UnitType.CLASS);
-          classUnit.setName(className);
+          /*classUnit = (ClassUnit)UnitFactory.generateUnit(UnitType.CLASS);
+          classUnit.setName(className);*/
+          classUnit = (ClassUnit) SYMBOL_TABLE.add(className, UnitType.CLASS);
         } else {
-                    classUnit = (ClassUnit) SYMBOL_TABLE.add(className, UnitType.CLASS);
+            IntegerMuted intBaseMuted = new IntegerMuted(-1);
+                    classUnit = (ClassUnit) SYMBOL_TABLE.lookUp(className, UnitType.CLASS, intBaseMuted);
                     if (superClassName != null) {
                       IntegerMuted intMuted = new IntegerMuted(-1);
                       superClassUnit = (ClassUnit)SYMBOL_TABLE.lookUp(superClassName, UnitType.CLASS, intMuted);
@@ -160,7 +162,8 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
       classFields = Member();
                             classFieldsCollection.addAll(classFields);
     }
-      if (MODE == 1) {
+      //classUnit.setMembersAndMethods(classFields);
+      if (MODE == 0) {
         classUnit.setMembersAndMethods(classFields);
       }
     jj_consume_token(RCB);
@@ -422,10 +425,11 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
   VariableUnit variable;
   String variableName = null;
     variableName = ID();
-    if (MODE == 1) {
+    if (MODE == 0) {
             variable = (VariableUnit)SYMBOL_TABLE.add(variableName, UnitType.VARIABLE);
     } else {
-        variable = new VariableUnit();
+        IntegerMuted intMuted = new IntegerMuted(-1);
+        variable = (VariableUnit)SYMBOL_TABLE.lookUp(variableName, UnitType.VARIABLE, intMuted);
     }
     label_5:
     while (true) {
@@ -2953,11 +2957,6 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
     finally { jj_save(46, xla); }
   }
 
-  private boolean jj_3R_108() {
-    if (jj_3R_91()) return true;
-    return false;
-  }
-
   private boolean jj_3R_96() {
     if (jj_scan_token(ASSIGN)) return true;
     if (jj_3R_27()) return true;
@@ -3061,13 +3060,13 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
     return false;
   }
 
-  private boolean jj_3R_78() {
-    if (jj_scan_token(ID)) return true;
+  private boolean jj_3R_106() {
+    if (jj_3R_67()) return true;
     return false;
   }
 
-  private boolean jj_3R_106() {
-    if (jj_3R_67()) return true;
+  private boolean jj_3R_78() {
+    if (jj_scan_token(ID)) return true;
     return false;
   }
 
@@ -3081,11 +3080,6 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
     return false;
   }
 
-  private boolean jj_3R_75() {
-    if (jj_scan_token(INT)) return true;
-    return false;
-  }
-
   private boolean jj_3R_43() {
     if (jj_3R_67()) return true;
     return false;
@@ -3095,6 +3089,11 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
     if (jj_scan_token(LSB)) return true;
     if (jj_3R_27()) return true;
     if (jj_scan_token(RSB)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_75() {
+    if (jj_scan_token(INT)) return true;
     return false;
   }
 
@@ -3148,11 +3147,6 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
     return false;
   }
 
-  private boolean jj_3R_24() {
-    if (jj_scan_token(PUBLIC)) return true;
-    return false;
-  }
-
   private boolean jj_3_47() {
     if (jj_scan_token(ID)) return true;
     Token xsp;
@@ -3164,7 +3158,7 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
     return false;
   }
 
-  private boolean jj_3R_18() {
+  private boolean jj_3R_24() {
     if (jj_scan_token(PUBLIC)) return true;
     return false;
   }
@@ -3181,6 +3175,11 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
 
   private boolean jj_3R_145() {
     if (jj_scan_token(MINUS)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_18() {
+    if (jj_scan_token(PUBLIC)) return true;
     return false;
   }
 
@@ -3248,20 +3247,6 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
     return false;
   }
 
-  private boolean jj_3_5() {
-    if (jj_scan_token(STATIC)) return true;
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3R_21()) {
-    jj_scanpos = xsp;
-    if (jj_3R_22()) {
-    jj_scanpos = xsp;
-    if (jj_3R_23()) return true;
-    }
-    }
-    return false;
-  }
-
   private boolean jj_3_41() {
     if (jj_3R_36()) return true;
     return false;
@@ -3290,6 +3275,20 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
     }
     }
     }
+    }
+    }
+    return false;
+  }
+
+  private boolean jj_3_5() {
+    if (jj_scan_token(STATIC)) return true;
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3R_21()) {
+    jj_scanpos = xsp;
+    if (jj_3R_22()) {
+    jj_scanpos = xsp;
+    if (jj_3R_23()) return true;
     }
     }
     return false;
@@ -3461,11 +3460,6 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
     return false;
   }
 
-  private boolean jj_3_3() {
-    if (jj_3R_17()) return true;
-    return false;
-  }
-
   private boolean jj_3R_124() {
     Token xsp;
     xsp = jj_scanpos;
@@ -3482,8 +3476,8 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
     return false;
   }
 
-  private boolean jj_3_2() {
-    if (jj_3R_16()) return true;
+  private boolean jj_3_3() {
+    if (jj_3R_17()) return true;
     return false;
   }
 
@@ -3503,8 +3497,8 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
     return false;
   }
 
-  private boolean jj_3_1() {
-    if (jj_3R_15()) return true;
+  private boolean jj_3_2() {
+    if (jj_3R_16()) return true;
     return false;
   }
 
@@ -3513,6 +3507,11 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
     Token xsp;
     xsp = jj_scanpos;
     if (jj_3R_130()) jj_scanpos = xsp;
+    return false;
+  }
+
+  private boolean jj_3_1() {
+    if (jj_3R_15()) return true;
     return false;
   }
 
@@ -3734,11 +3733,6 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
     return false;
   }
 
-  private boolean jj_3R_49() {
-    if (jj_scan_token(ID)) return true;
-    return false;
-  }
-
   private boolean jj_3R_37() {
     if (jj_3R_67()) return true;
     return false;
@@ -3770,6 +3764,11 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
 
   private boolean jj_3_31() {
     if (jj_3R_36()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_49() {
+    if (jj_scan_token(ID)) return true;
     return false;
   }
 
@@ -4407,6 +4406,11 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
     if (jj_3R_50()) jj_scanpos = xsp;
     if (jj_scan_token(RP)) return true;
     if (jj_3R_30()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_108() {
+    if (jj_3R_91()) return true;
     return false;
   }
 
