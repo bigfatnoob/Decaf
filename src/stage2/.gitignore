@@ -21,7 +21,6 @@
 /boolean_AST.java
 /char_AST.java
 /Start_AST.java
-/id_AST.java
 /int_AST.java
 /voidType_AST.java
 /block_AST.java
