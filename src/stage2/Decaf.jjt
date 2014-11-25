@@ -8,6 +8,8 @@ options
   NODE_DEFAULT_VOID = true;
   NODE_PREFIX = "";
   STATIC = false;
+  VISITOR = true;
+  VISITOR_DATA_TYPE = "ScopeElement";
 }
 
 PARSER_BEGIN(Decaf)
@@ -15,7 +17,7 @@ package stage2;
 import java.util.*;
 public class Decaf
 {
-  public static SymbolTable SYMBOL_TABLE = new SymbolTable();
+  public static SymbolTable SYMBOL_TABLE = SymbolTable.getSymbolTable();
   /**
   * Mode = 0 represents scope construction
     Mode = 1 represents symbol table construction 
@@ -40,11 +42,22 @@ public class Decaf
     start_AST start = null;
     try
     {
+      /**
+      *Parser and Symbol Table Generator
+      */
       start = parser.Start();
       System.out.println("Parsed Successfully.");
       MODE = 1;
+
+      /**
+      *Symbol Table Verification
+      */
       parser = new Decaf(new java.io.FileInputStream(args[0]));
       start = parser.Start();
+
+      /**
+      *TypeChecking
+      */
       //ScopeFactory sf = ScopeFactory.getScopeFactory();
       /*for(String key: SYMBOL_TABLE.getTable().keySet()) {
         System.out.println(SYMBOL_TABLE.getTable().get(key));      }*/
@@ -246,10 +259,17 @@ Unit Class():
     }
     <LCB>
     {SYMBOL_TABLE.enterScopeForUnit(classUnit,MODE);}
-    (classFields = Member(){classFieldsCollection.addAll(classFields);})*
+    (classFields = Member(){
+        /*
+        for (Unit memberUnit: classFields) {
+          for (Unit existingUnit : classFieldsCollection) {
+            if (existingUnit.getName().equals(memberUnit.getName())) {
+             throw new ParseException(memberUnit.getName() + " already declared in  " + className);             }          }        }*/
+        classFieldsCollection.addAll(classFields);
+      })*
     {
       //classUnit.setMembersAndMethods(classFields);
-      if (MODE == 0) {        classUnit.setMembersAndMethods(classFields);
+      if (MODE == 0) {        classUnit.setMembersAndMethods(classFieldsCollection);
       }    }
     <RCB>
     {
@@ -328,11 +348,12 @@ SimpleNode Type():{
   |t = <CHAR> {return jjtThis;} #char_AST
   |t = <BOOLEAN> {return jjtThis;} #boolean_AST
   |t = <ID> {
-    IntegerMuted currentScope = new IntegerMuted();
+    IntegerMuted currentScope = new IntegerMuted(-1);
     if (MODE == 1){		varUnit = (ClassUnit) SYMBOL_TABLE.lookUp(t.image,UnitType.CLASS, currentScope);
 		if (varUnit == null){
 		  throw new ParseException(t.image + " has not been declared yet");		}
 		varUnit.setType(jjtThis);
+		jjtThis.setUnit(varUnit);
     }
     return jjtThis;
   } #id_AST)
@@ -383,15 +404,24 @@ Unit Method():{
 {
   modifier = Modifier()
   
-  {methodUnit.setModifier(modifier);} 
+   
   ( type = Type() | < VOID > {type = jjtThis; }  #voidType_AST)//{methodUnit.setReturnType(type);}
   (< LSB > < RSB >)*
-  functionName = ID()
+  functionName = ID() {
+    if (MODE == 0) {
+	    methodUnit = (MethodUnit)SYMBOL_TABLE.add(functionName,UnitType.METHOD);
+	    methodUnit.setModifier(modifier);
+	    methodUnit.setName(functionName);
+	    methodUnit.setReturnType(type);
+   }  }
   <LP>
-  {
-    methodUnit.setName(functionName);
+  { 
     SYMBOL_TABLE.enterScopeForUnit(methodUnit, MODE);  }
-  ((formalArgs = FormalArgs()){methodUnit.setFormalArgs(formalArgs);})?
+  ((formalArgs = FormalArgs()){
+    if (MODE == 0){
+        methodUnit.setFormalArgs(formalArgs);
+    }
+   })?
   <RP>
   {
     SYMBOL_TABLE.exitScope(MODE);
@@ -406,17 +436,31 @@ Unit Ctor():{
   List<Unit> formalArgs = null;
   Token t = null;
   String functionName = null;
+  id_AST type = null;
 }
 {
   modifier = Modifier(){methodUnit.setModifier(modifier);}
+  {
+    type = jjtThis;  }#id_AST
   functionName = ID()
   <LP>
   {
-    methodUnit.setName(functionName);
-    methodUnit.setConstructor(true);
+    if (MODE == 0) {
+       methodUnit = (MethodUnit)SYMBOL_TABLE.add(t.image,UnitType.METHOD);
+       methodUnit.setName(functionName);
+       methodUnit.setConstructor(true);
+       methodUnit.setReturnType(type);
+    } else {
+      IntegerMuted intMuted = new IntegerMuted(-1);
+      methodUnit = (MethodUnit)SYMBOL_TABLE.lookUp(t.image,UnitType.METHOD, intMuted);    }
+   
     SYMBOL_TABLE.enterScopeForUnit(methodUnit,MODE);
   }
-  (formalArgs = FormalArgs(){methodUnit.setFormalArgs(formalArgs);})?
+  (formalArgs = FormalArgs(){
+    if (MODE == 0) {
+      methodUnit.setFormalArgs(formalArgs);
+    }
+   })?
   <RP>
   {
     SYMBOL_TABLE.exitScope(MODE);
@@ -508,17 +552,16 @@ void FieldAccess():{}
 void FieldAccess_1():{}
 {
   LOOKAHEAD(6)
-  (PrimaryFieldAccess() <DOT> <ID> #fieldExpr_AST) ((<LSB> Expression() <RSB>)+ #arrayExpr_AST)
+  (PrimaryFieldAccess() <DOT> <ID> #fieldExpr_AST) ((<LSB> Expression() <RSB> {jjtThis.size += 1;})+ #arrayExpr_AST)
   | LOOKAHEAD(6)
   PrimaryFieldAccess() <DOT> <ID> #fieldExpr_AST
   | LOOKAHEAD(6)
-  (<ID> #idExpr_AST) ((<LSB> Expression() <RSB>)+ #arrayExpr_AST) 
+  (<ID> #idExpr_AST) ((<LSB> Expression() <RSB> {jjtThis.size += 1;})+ #arrayExpr_AST) 
   | <ID> #idExpr_AST
 }
 
 void PrimaryFieldAccess():{}
 {
-  
   LOOKAHEAD(3) Literal()
   | LOOKAHEAD(3) <THIS> #thisExpr_AST
   | LOOKAHEAD(3) <SUPER> #superExpr_AST

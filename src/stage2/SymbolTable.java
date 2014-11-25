@@ -14,9 +14,17 @@ import java.util.Map;
  */
 public class SymbolTable {
 	private Map<String, List<TableEntry>> table;
+	private static SymbolTable symbolTable;
 	
-	public SymbolTable(){
-		table = new HashMap<String, List<TableEntry>>();
+	private SymbolTable(){
+		this.table = new HashMap<String, List<TableEntry>>();
+	}
+	
+	public static SymbolTable getSymbolTable(){
+		if (symbolTable == null) {
+			symbolTable = new SymbolTable();
+		}
+		return symbolTable;
 	}
 	
 	public Map<String, List<TableEntry>> getTable(){
@@ -60,6 +68,7 @@ public class SymbolTable {
 	 * @param tableEntry
 	 */
 	private void updateTable(TableEntry tableEntry) {
+		ScopeFactory scopeFactory = ScopeFactory.getScopeFactory();
 		String name = tableEntry.getName();
 		List<TableEntry> tableEntries = table.get(name);
 		
@@ -72,8 +81,11 @@ public class SymbolTable {
 		TableEntry existingTableEntry = null;
 		for (TableEntry tblEntry: tableEntries) {
 			if (tblEntry.getName().equals(name)) {
-				existingTableEntry = tblEntry;
-				break;
+				if((tblEntry.getUnit().getScopeLevel() < scopeFactory.getCurrentScopeElement().getUnit().getScopeLevel())||
+						(tblEntry.getUnit().equals(scopeFactory.getCurrentScopeElement().getUnit()))) {
+					existingTableEntry = tblEntry;
+					break;
+				}
 			}
 		}
 		
@@ -112,6 +124,7 @@ public class SymbolTable {
 	}
 	
 	public Unit lookUp(String name, UnitType type, IntegerMuted scopeLevel) {
+		ScopeFactory scopeFactory = ScopeFactory.getScopeFactory();
 		List<TableEntry> tableEntries = table.get(name);
 		if ((tableEntries ==  null) || (tableEntries.size() == 0))
 			return null;
@@ -119,13 +132,23 @@ public class SymbolTable {
 		TableEntry tableEntry = null;
 		for (TableEntry tblEntry: tableEntries) {
 			if (tblEntry.getName().equals(name)) {
-				tableEntry = tblEntry;
-				break;
+				if(tblEntry.getUnit().getScopeLevel() == scopeFactory.getCurrentScopeElement().getUnit().getScopeLevel()) {
+					// FOr Class declarations
+					tableEntry = tblEntry;
+					break;
+				}
+				if((tblEntry.getUnit().getScopeLevel() < scopeFactory.getCurrentScopeElement().getUnit().getScopeLevel())||
+						(tblEntry.getUnit().equals(scopeFactory.getCurrentScopeElement().getUnit()))) {
+					tableEntry = tblEntry;
+					break;
+				}
 			}
+		}
+		if (tableEntry == null){
+			return null;
 		}
 		
 		Unit currentUnit = tableEntry.getUnit();
-		ScopeFactory scopeFactory = ScopeFactory.getScopeFactory();
 		while (currentUnit != null) {
 			if (currentUnit.getUnitType().equals(type)) {
 				scopeLevel.setValue(0);

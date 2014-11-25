@@ -9,10 +9,9 @@ package stage2;
  */
 public class Modifier {
 	
-	private boolean scopePublic;
+	private boolean scopePublic = true;
 	private boolean scopePrivate;
 	private boolean scopeProtected;
-	private boolean scopeDefault = true;
 	private boolean scopeStatic;
 	
 	public boolean isScopePublic() {
@@ -20,27 +19,20 @@ public class Modifier {
 	}
 	public void setScopePublic(boolean scopePublic) {
 		this.scopePublic = scopePublic;
-		this.scopeDefault = false;
 	}
 	public boolean isScopePrivate() {
 		return scopePrivate;
 	}
 	public void setScopePrivate(boolean scopePrivate) {
 		this.scopePrivate = scopePrivate;
-		this.scopeDefault = false;
+		this.scopePublic = false;
 	}
 	public boolean isScopeProtected() {
 		return scopeProtected;
 	}
 	public void setScopeProtected(boolean scopeProtected) {
 		this.scopeProtected = scopeProtected;
-		this.scopeDefault = false;
-	}
-	public boolean isScopeDefault() {
-		return scopeDefault;
-	}
-	public void setScopeDefault(boolean scopeDefault) {
-		this.scopeDefault = scopeDefault;
+		this.scopePublic = false;
 	}
 	public boolean isScopeStatic() {
 		return scopeStatic;
