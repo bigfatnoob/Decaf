@@ -33,6 +33,8 @@ public class MethodUnit extends Unit {
 	
 	private boolean isConstructor;
 	
+	private block_AST methodBlock;
+	
 	public Modifier getModifier() {
 		return modifier;
 	}
@@ -75,6 +77,37 @@ public class MethodUnit extends Unit {
 	public void setLocalVariable(boolean isLocalVariable) {
 		this.isLocalVariable = isLocalVariable;
 	}
+	public block_AST getMethodBlock() {
+		return methodBlock;
+	}
+	public void setMethodBlock(block_AST methodBlock) {
+		this.methodBlock = methodBlock;
+	}
 	
+	public boolean validateMethodCall(List<binaryExpression_AST> actualArgs) {
+		int argSize = 0;
+		if (actualArgs != null){
+			argSize = actualArgs.size();
+		}
+		int formalArgSize = 0;
+		if (formalArgs != null){
+			formalArgSize = formalArgs.size();
+		}
+		if (formalArgSize != argSize) {
+			return false;
+		}
+		if (formalArgSize == 0) {
+			return true;
+		}
+		boolean validMethod = true;
+		for (int i=0; i<formalArgSize; i++){
+			VariableUnit formalArg = (VariableUnit)formalArgs.get(i);
+			if (! formalArg.getType().jjtGetValue().toString().equals(actualArgs.get(i).type)) {
+				validMethod = false;
+				break;
+			}
+		}
+		return validMethod;
+	}
 	
 }

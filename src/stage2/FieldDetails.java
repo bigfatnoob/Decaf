@@ -10,6 +10,8 @@ package stage2;
 public class FieldDetails {
 	private SimpleNode type;
 	private Modifier modifier;
+	boolean isArray;
+	int arraySize = 0;
 	public SimpleNode getType() {
 		return type;
 	}

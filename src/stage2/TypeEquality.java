@@ -28,4 +28,14 @@ public class TypeEquality {
 		}
 		return false;
 	}
+	
+	public static boolean eq(Type t1, Type t2, Type commonType) {
+		if (commonType == null) {
+			return t1.equals(t2);
+		}
+		if (t1.equals(t2)) {
+			return t1.equals(commonType);
+		}
+		return false;
+	}
 }

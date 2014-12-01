@@ -19,6 +19,8 @@ public class VariableUnit extends Unit {
 	
 	private boolean isArray;
 	
+	private int arraySize;
+	
 	private boolean isFormalArgument;
 	
 	private boolean isLocalVariable;
@@ -52,6 +54,12 @@ public class VariableUnit extends Unit {
 	}
 	public void setLocalVariable(boolean isLocalVariable) {
 		this.isLocalVariable = isLocalVariable;
+	}
+	public int getArraySize() {
+		return arraySize;
+	}
+	public void setArraySize(int arraySize) {
+		this.arraySize = arraySize;
 	}
 	
 }

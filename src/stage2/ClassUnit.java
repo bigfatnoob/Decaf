@@ -49,4 +49,54 @@ public class ClassUnit extends Unit {
 	public void setType(SimpleNode type) {
 		this.type = type;
 	}
+	
+	public VariableUnit getVariable(String variableName) {
+		for(Unit unit:membersAndMethods) {
+			if ((unit instanceof VariableUnit) && (unit.getName().equals(variableName))) {
+				return (VariableUnit)unit;
+			}
+		}
+		return null;
+	}
+	
+	public MethodUnit getMethod(String methodName, List<binaryExpression_AST> actualArgs) {
+		int argSize = 0;
+		if (actualArgs != null){
+			argSize = actualArgs.size();
+		}
+		MethodUnit method = null;
+		for(Unit unit:membersAndMethods) {
+			if (unit instanceof MethodUnit) {
+				method = (MethodUnit) unit;
+				if (! unit.getName().equals(methodName)) {
+					continue;
+				}
+				
+				List<Unit> formalArgs = method.getFormalArgs();
+				int formalArgSize = 0;
+				if (formalArgs != null){
+					formalArgSize = formalArgs.size();
+				}
+				if (formalArgSize != argSize) {
+					continue;
+				}
+				if (formalArgSize == 0) {
+					return method;
+				}
+				boolean validMethod = true;
+				for (int i=0; i<formalArgSize; i++){
+					VariableUnit formalArg = (VariableUnit)formalArgs.get(i);
+					if (! formalArg.getType().jjtGetValue().toString().equals(actualArgs.get(i).type)) {
+						validMethod = false;
+						break;
+					}
+				}
+				if (validMethod) {
+					return method;
+				}
+			}
+		}
+		
+		return null;
+	}
 }

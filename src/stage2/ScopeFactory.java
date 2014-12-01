@@ -22,11 +22,27 @@ public class ScopeFactory {
 		currentScope = rootScope;
 	}
 	
+	public static ScopeElement getStartScopeElement(){
+		if (scopeFactory.rootScope.isProgram()){
+			return scopeFactory.rootScope;
+		}
+		for(ScopeElement kidScope:scopeFactory.rootScope.getKids()) {
+			if (kidScope.isProgram()) {
+				return kidScope;
+			}
+		}
+		return null;
+	}
+	
 	public static ScopeFactory getScopeFactory(){
 		if (scopeFactory == null) {
 			scopeFactory = new ScopeFactory();
 		}
 		return scopeFactory;
+	}
+	
+	public ScopeElement getCurrentScope(){
+		return currentScope;
 	}
 	
 	public ScopeUnit getCurrentScopeElement() {

@@ -15,6 +15,7 @@ options
 PARSER_BEGIN(Decaf)
 package stage2;
 import java.util.*;
+import java.lang.*;
 public class Decaf
 {
   public static SymbolTable SYMBOL_TABLE = SymbolTable.getSymbolTable();
@@ -225,7 +226,7 @@ start_AST Start() #start_AST:
   {SYMBOL_TABLE.exitScope(MODE);}
   <EOF>
   {
-    //jjtThis.setClasses(classUnitList);
+    jjtThis.setClasses(classUnitList);
     return jjtThis;
   }
 }
@@ -268,7 +269,6 @@ Unit Class():
         classFieldsCollection.addAll(classFields);
       })*
     {
-      //classUnit.setMembersAndMethods(classFields);
       if (MODE == 0) {        classUnit.setMembersAndMethods(classFieldsCollection);
       }    }
     <RCB>
@@ -329,13 +329,19 @@ List<Unit> FieldDeclarations(FieldDetails fieldDetails):
 {
   SimpleNode type = null;
   List<Unit> variables = null;
+  boolean isArray = false;
+  int arraySize = 0;
 }
 {
   type = Type(){
     jjtree.popNode();
     fieldDetails.setType(type);
   }
-  (< LSB > < RSB >)*
+  (< LSB > < RSB >  {
+    type.typeObj.isArray = true;
+    type.typeObj.arraySize += 1;
+    fieldDetails.isArray = true;
+    fieldDetails.arraySize += 1;  })*
   variables = Variables(fieldDetails)<SCOLON>{return variables;}
 }
 
@@ -344,17 +350,33 @@ SimpleNode Type():{
   ClassUnit varUnit = null;
 }
 {
-  (t = <INT> {return jjtThis;} #int_AST 
-  |t = <CHAR> {return jjtThis;} #char_AST
-  |t = <BOOLEAN> {return jjtThis;} #boolean_AST
+  (t = <INT> {
+    jjtThis.jjtSetValue("int");
+    jjtThis.typeObj.name = "int";
+    return jjtThis;
+  } #int_AST 
+  |t = <CHAR> {
+    jjtThis.jjtSetValue("char");
+    jjtThis.typeObj.name = "char";
+    return jjtThis;
+  } #char_AST
+  |t = <BOOLEAN> {
+    jjtThis.jjtSetValue("boolean");
+    jjtThis.typeObj.name = "boolean";
+    return jjtThis;
+  } #boolean_AST
   |t = <ID> {
     IntegerMuted currentScope = new IntegerMuted(-1);
     if (MODE == 1){		varUnit = (ClassUnit) SYMBOL_TABLE.lookUp(t.image,UnitType.CLASS, currentScope);
 		if (varUnit == null){
 		  throw new ParseException(t.image + " has not been declared yet");		}
 		varUnit.setType(jjtThis);
+		jjtThis.jjtSetValue(t.image);
+		jjtThis.typeObj.name = t.image;
+		jjtThis.typeObj.isClass = true;
 		jjtThis.setUnit(varUnit);
     }
+    //System.out.println(jjtThis.jjtGetValue());
     return jjtThis;
   } #id_AST)
   }
@@ -387,6 +409,8 @@ Unit Variable(FieldDetails fieldDetails):{
     if (MODE == 1) {
 	    variable.setType(fieldDetails.getType());
 	    variable.setModifier(fieldDetails.getModifier());
+	    variable.setArray(fieldDetails.isArray);
+	    variable.setArraySize(fieldDetails.arraySize);
     }
     return variable; 
   }
@@ -400,13 +424,16 @@ Unit Method():{
   String methodName = null;
   SimpleNode block = null;
   String functionName = null;
+  boolean isArray = false;
 }
 {
   modifier = Modifier()
   
    
   ( type = Type() | < VOID > {type = jjtThis; }  #voidType_AST)//{methodUnit.setReturnType(type);}
-  (< LSB > < RSB >)*
+  (< LSB > < RSB >  {
+    type.typeObj.isArray = true;
+    type.typeObj.arraySize+=1;  })*
   functionName = ID() {
     if (MODE == 0) {
 	    methodUnit = (MethodUnit)SYMBOL_TABLE.add(functionName,UnitType.METHOD);
@@ -426,7 +453,8 @@ Unit Method():{
   {
     SYMBOL_TABLE.exitScope(MODE);
   }
-  Block()//Handle Scoping here
+  block = Block()  {
+    methodUnit.setMethodBlock((block_AST)block);      }
   {return methodUnit;}
 }
 
@@ -437,6 +465,7 @@ Unit Ctor():{
   Token t = null;
   String functionName = null;
   id_AST type = null;
+  block_AST block = null;
 }
 {
   modifier = Modifier(){methodUnit.setModifier(modifier);}
@@ -465,7 +494,10 @@ Unit Ctor():{
   {
     SYMBOL_TABLE.exitScope(MODE);
   }
-  Block()//Handle Scoping here
+  block = Block()
+  {
+    methodUnit.setMethodBlock((block_AST)block);    
+  }
   {return methodUnit;}
 }
 
@@ -484,70 +516,140 @@ Unit FormalArg():{
   FieldDetails fieldDetails = new FieldDetails();
   Unit formalArg = null;
   SimpleNode type = null;
+  boolean isArray = false;
+  int arraySize = 0;
 }
 {
-  type = Type(){fieldDetails.setType(type);}
-  (< LSB > < RSB >)*
+  type = Type()
+  (< LSB > < RSB >  {
+    isArray = true;
+    arraySize += arraySize;  })*
+  {
+    fieldDetails.isArray = true;
+    fieldDetails.arraySize = arraySize;
+    type.typeObj.isArray = true;
+    type.typeObj.arraySize = arraySize;
+    fieldDetails.setType(type);
+  }
   formalArg = Variable(fieldDetails){return formalArg;}
 }
 
-void Block() #block_AST:{
+block_AST Block() #block_AST:{
+  List<SimpleNode> stmts = new ArrayList<SimpleNode>();
+  SimpleNode stmt = null;
 }
 {
   <LCB>
   {
     SYMBOL_TABLE.enterScope(false, MODE);
   }
-  (Statement())*
+  (stmt = Statement(){stmts.add(stmt);})*
   <RCB>
   {
+    jjtThis.setStatements(stmts);
     SYMBOL_TABLE.exitScope(MODE);
+    return jjtThis;
   }
 }
 
-void Statement():{
+SimpleNode Statement():{
+  SimpleNode ifStat = null;
+  SimpleNode elseStat = null;
+  binaryExpression_AST expr = null;
+  SimpleNode body = null;
+  List<Unit> variables = null;
 }
 {
-  LOOKAHEAD(3)<IF> <LP> Expression() <RP> Statement() (LOOKAHEAD(1) <ELSE> Statement())? #ifThenElseStat_AST
-  |<WHILE> <LP> Expression() <RP> Statement() #whileStat_AST
-  |<RETURN> (Expression())? <SCOLON> #returnStat_AST
-  |LOOKAHEAD(3) StatementExpression() <SCOLON> #expressionStat_AST // Add to Statements attributes
-  |LOOKAHEAD(3) FieldDeclarations(new FieldDetails()) #varDeclStat_AST // Add to Statements attributes
-  | LOOKAHEAD(3)Block() #block_AST
-  |<BREAK> <SCOLON> #breakStat_AST
-  |<CONTINUE> <SCOLON> #continueStat_AST
-  |<SCOLON> #emptyStat_AST
+  LOOKAHEAD(3)(<IF> <LP> expr = Expression() <RP> ifStat = Statement() (LOOKAHEAD(1) <ELSE> elseStat = Statement())? {
+    jjtThis.ifStat = ifStat;
+    jjtThis.elseStat = elseStat;
+    jjtThis.condition = expr;
+    return jjtThis;
+   }) #ifThenElseStat_AST
+  |(<WHILE> <LP> expr = Expression() <RP> body = Statement() {
+     jjtThis.condition = expr;
+     jjtThis.body = body;
+     return jjtThis;
+  }) #whileStat_AST
+  |(<RETURN> (expr = Expression())? <SCOLON> {
+    jjtThis.expr = expr;
+    return jjtThis;
+  })#returnStat_AST
+  |LOOKAHEAD(3)( body = StatementExpression() <SCOLON> {
+    jjtThis.expressionStat = body;
+    return jjtThis;
+  }) #expressionStat_AST // Add to Statements attributes
+  |LOOKAHEAD(3)( variables = FieldDeclarations(new FieldDetails()) {
+    jjtThis.variables = variables;
+    return jjtThis;
+  }) #varDeclStat_AST // Add to Statements attributes
+  |LOOKAHEAD(3)(Block() {return jjtThis;}) #block_AST
+  |(<BREAK> <SCOLON> {return jjtThis;})#breakStat_AST
+  |(<CONTINUE> <SCOLON> {return jjtThis;})#continueStat_AST
+  |(<SCOLON> {return jjtThis;})#emptyStat_AST
 }
 
-void Literal():{}
+SimpleNode Literal():{
+    Token t = null;
+}
 {
-  <NULL> #nullExpr_AST
-  |<TRUE> #boolExpr_AST
-  |<FALSE> #boolExpr_AST
-  |<INTEGER> #intExpr_AST
-  |<CHARLITERAL> #charExpr_AST
-  |<STRINGLITERAL> #stringExpr_AST
+  <NULL>
+  {
+    jjtThis.typeObj.name="null";
+    return jjtThis;
+  } #nullExpr_AST
+  |<TRUE>  {
+    jjtThis.typeObj.name="boolean";
+    jjtThis.value = true;
+    return jjtThis;  } #boolExpr_AST
+  |<FALSE>
+  {
+    jjtThis.typeObj.name="boolean";
+    jjtThis.value = false;
+    return jjtThis;
+  } #boolExpr_AST
+  |t = <INTEGER>{
+    jjtThis.typeObj.name="int";
+    jjtThis.value = Integer.parseInt(t.image);
+    return jjtThis;
+  } #intExpr_AST
+  |t = <CHARLITERAL>{
+    jjtThis.typeObj.name="char";
+    jjtThis.value = t.image.charAt(0);
+    return jjtThis;
+  } #charExpr_AST
+  |t = <STRINGLITERAL>{
+    jjtThis.typeObj.name="String";
+    jjtThis.typeObj.isClass=true;
+    jjtThis.value = t.image;
+    return jjtThis;
+  } #stringExpr_AST
 }
 
-void StatementExpression():{}
+SimpleNode StatementExpression():{
+    SimpleNode statExpr = null;
+}
 {
   LOOKAHEAD(10)
-  MethodCall()
+  statExpr = MethodCall()
   |LOOKAHEAD(10)
-  Assignment()
+  statExpr = Assignment()
   |LOOKAHEAD(10)
-  Expression() 
+  statExpr = Expression()
+  {
+    return statExpr;  }
 }
 
-void Assignment():{}
+assignOperator_AST Assignment():{}
 {
-  FieldAccess() <ASSIGN> #assignOperator_AST Expression()
+  (FieldAccess() <ASSIGN>  Expression()  {
+    return jjtThis;  })#assignOperator_AST
 }
 
 void FieldAccess():{}
 {
   FieldAccess_1()(MethodPrime())? 
-}
+} 
 
 void FieldAccess_1():{}
 {
@@ -560,120 +662,208 @@ void FieldAccess_1():{}
   | <ID> #idExpr_AST
 }
 
-void PrimaryFieldAccess():{}
+SimpleNode PrimaryFieldAccess():{
+  SimpleNode primaryFieldAccess = null;
+  Token id = null;
+  List< binaryExpression_AST> args = null;
+}
 {
-  LOOKAHEAD(3) Literal()
-  | LOOKAHEAD(3) <THIS> #thisExpr_AST
-  | LOOKAHEAD(3) <SUPER> #superExpr_AST
-  | LOOKAHEAD(3) <LP> Expression() <RP>
-  | LOOKAHEAD(3) <NEW> <ID> <LP> (ActualArguments())? <RP> #newClassExpr_AST
+  (LOOKAHEAD(3) primaryFieldAccess = Literal()
+  | LOOKAHEAD(3) <THIS>  {
+    primaryFieldAccess = jjtThis;  }#thisExpr_AST
+  | LOOKAHEAD(3) <SUPER>  {
+    primaryFieldAccess = jjtThis;  }#superExpr_AST
+  | LOOKAHEAD(3) <LP> primaryFieldAccess = Expression() <RP>
+  | LOOKAHEAD(3) <NEW> <ID> <LP> (ActualArguments())? <RP>  {
+    jjtThis.name = id.image;
+  	IntegerMuted intBaseMuted = new IntegerMuted(-1);
+  	ClassUnit classUnit = (ClassUnit) SYMBOL_TABLE.lookUp(id.image, UnitType.CLASS, intBaseMuted);
+  	jjtThis.arguments =  args;
+  	if (classUnit == null) {
+    	throw new ParseException("Class " + id.image + " has not been declared.");
+  	}
+  	jjtThis.classUnit = classUnit;
+  	primaryFieldAccess = jjtThis;  }#newClassExpr_AST)  {
+    return primaryFieldAccess;  }
  
 }
 
-void MethodCall() #methodCall_AST:{}
+methodCall_AST MethodCall() :{
+	methodCall1_AST m1 = null;
+	methodCall2_AST m2 = null;
+}
 {
-  MethodCall_1() (MethodCall_2())?
+  m1 = MethodCall_1() (m2 = MethodCall_2())?
+  {
+    jjtThis.m1 = m1;
+    jjtThis.m2 = m2;    return jjtThis;
+  } #methodCall_AST
 }
 
-void MethodCall_1() #methodCall_AST:{}
+methodCall1_AST MethodCall_1():{
+  methodParent_AST mParent = null;
+  methodPrime_AST mPrime = null;
+  List<binaryExpression_AST> actualArgs = null;
+}
 {
-  MethodParent() (MethodPrime())? <LP>(ActualArguments())?<RP>
+  mParent = MethodParent() (mPrime = MethodPrime())? <LP>(actualArgs = ActualArguments())?<RP>
+  {
+    jjtThis.mParent = mParent;
+    jjtThis.mPrime = mPrime;
+    jjtThis.actualArgs = actualArgs;    return jjtThis;
+  } #methodCall1_AST
 }
 
-void MethodCall_2():{}
+methodCall2_AST MethodCall_2():{
+	Token id = null;
+	List<binaryExpression_AST> actualArgs = null;
+	methodCall2_AST m2 = null;
+	binaryExpression_AST arrayIndex = null;
+	methodPrime_AST mPrime = null;
+}
 {
-  LOOKAHEAD(5)<DOT> <ID> <LP> (ActualArguments())? <RP> #AstMethodExpr MethodCall_2()
+  (LOOKAHEAD(5)<DOT> id = <ID> <LP> (actualArgs = ActualArguments())? <RP> #methodExpr_AST m2 = MethodCall_2()
   | LOOKAHEAD(5)
-    <DOT> <ID> <LSB> Expression() <RSB> <LP> (ActualArguments())? <RP> MethodCall_2()
+    <DOT> id = <ID> <LSB> arrayIndex = Expression() <RSB> <LP> (actualArgs = ActualArguments())? <RP> m2 = MethodCall_2()
   | LOOKAHEAD(5)
-    <DOT> <ID> MethodPrime() <LP> (ActualArguments())? <RP> MethodCall_2()
+    <DOT> id = <ID> mPrime = MethodPrime() <LP> (actualArgs = ActualArguments())? <RP> m2 = MethodCall_2()
   | LOOKAHEAD(5)
-    <DOT> <ID> <LSB> Expression() <RSB> MethodPrime() <LP> (ActualArguments())? <RP> MethodCall_2()
+    <DOT> id = <ID> <LSB> arrayIndex = Expression() <RSB> mPrime = MethodPrime() <LP> (actualArgs = ActualArguments())? <RP> m2 = MethodCall_2()
   | LOOKAHEAD(5)
-    <DOT> <ID> <LP> (ActualArguments())? <RP>
+    <DOT> id = <ID> <LP> (actualArgs = ActualArguments())? <RP>
   | LOOKAHEAD(5)
-    <DOT> <ID> <LSB> Expression() <RSB> <LP> (ActualArguments())? <RP>
+    <DOT> id = <ID> <LSB> arrayIndex = Expression() <RSB> <LP> (actualArgs = ActualArguments())? <RP>
   | LOOKAHEAD(5)
-    <DOT> <ID> MethodPrime() <LP> (ActualArguments())? <RP>
+    <DOT> id = <ID> mPrime = MethodPrime() <LP> (actualArgs = ActualArguments())? <RP>
   | LOOKAHEAD(5)
-    <DOT> <ID> <LSB> Expression() <RSB> MethodPrime() <LP> (ActualArguments())? <RP>
+    <DOT> id = <ID> <LSB> arrayIndex = Expression() <RSB> mPrime = MethodPrime() <LP> (actualArgs = ActualArguments())? <RP>)    {
+      jjtThis.name = id.image;
+      jjtThis.actualArgs = actualArgs;
+      jjtThis.m2 = m2;
+      jjtThis.arrayIndex = arrayIndex;
+      jjtThis.mPrime = mPrime;
+      return jjtThis;    }#methodCall2_AST
 }
 
-void MethodParent():{}
+methodParent_AST MethodParent():{
+	SimpleNode primaryMethodParent = null;
+	Token id = null;
+	binaryExpression_AST arrayIndex = null;
+}
 {
-  (PrimaryMethodParent() <DOT> <ID> #fieldExpr_AST)  (<LSB> Expression() <RSB> #arrayExpr_AST)? 
-  | (<ID> #idExpr_AST) (<LSB> Expression() <RSB> #arrayExpr_AST)? 
+  ((primaryMethodParent = PrimaryMethodParent() <DOT> id = <ID> #fieldExpr_AST)  (<LSB> arrayIndex = Expression() <RSB> #arrayExpr_AST)? 
+  | (id = <ID> #idExpr_AST) (<LSB> arrayIndex = Expression() <RSB> #arrayExpr_AST)?)	{
+	  jjtThis.primaryMethodParent = primaryMethodParent;
+	  jjtThis.name = id.image;
+	  jjtThis.arrayIndex = arrayIndex;
+	  return jjtThis;	}#methodParent_AST
 
 }
 
-void PrimaryMethodParent():{}
+SimpleNode PrimaryMethodParent():{
+	SimpleNode primaryMethodParent = null;
+	Token id = null;
+	List< binaryExpression_AST> args = null;
+}
 {
-  LOOKAHEAD(3)
-    Literal()
+  (LOOKAHEAD(3)
+    primaryMethodParent = Literal()
   | LOOKAHEAD(3)
-    <THIS> #thisExpr_AST
+    <THIS>    {
+      primaryMethodParent = jjtThis;    }#thisExpr_AST
   | LOOKAHEAD(3)
-    <SUPER> #superExpr_AST
+    <SUPER>    {
+      primaryMethodParent = jjtThis;    }#superExpr_AST
   | LOOKAHEAD(3)
-    <LP> Expression() <RP>
+    <LP> primaryMethodParent = Expression() <RP>
   | LOOKAHEAD(3)
-    <NEW> <ID> <LP> (ActualArguments())? <RP> #methodExpr_AST
+    (<NEW> id =<ID> <LP> (args = ActualArguments())? <RP>    {
+      jjtThis.name = id.image;
+      IntegerMuted intBaseMuted = new IntegerMuted(-1);
+      ClassUnit classUnit = (ClassUnit) SYMBOL_TABLE.lookUp(id.image, UnitType.CLASS, intBaseMuted);
+      jjtThis.arguments =  args;
+      if (classUnit == null) {
+        throw new ParseException("Class " + id.image + " has not been declared.");
+      }
+      jjtThis.classUnit = classUnit;
+      primaryMethodParent = jjtThis;    })#newClassExpr_AST)    {
+      return primaryMethodParent;    }
 }
 
-void MethodPrime():{}
+methodPrime_AST MethodPrime():{
+	methodPrime_AST mPrime = null;
+	Token id = null;
+	binaryExpression_AST arrayIndex = null;
+}
 {
-  LOOKAHEAD (3)
-    <DOT> <ID> #fieldExpr_AST MethodPrime()
+  (LOOKAHEAD (3)
+    <DOT> id = <ID> #fieldExpr_AST mPrime = MethodPrime()
   | LOOKAHEAD(3)
-    <DOT> <ID> #fieldExpr_AST <LSB> Expression() <RSB> #arrayExpr_AST MethodPrime()
-  | LOOKAHEAD(3) <DOT> <ID> #fieldExpr_AST <LSB> Expression() <RSB> #arrayExpr_AST
-  | <DOT> <ID> #fieldExpr_AST
+    <DOT> id = <ID> #fieldExpr_AST <LSB> arrayIndex = Expression() <RSB> #arrayExpr_AST mPrime = MethodPrime()
+  | LOOKAHEAD(3) <DOT> id = <ID> #fieldExpr_AST <LSB> arrayIndex = Expression() <RSB> #arrayExpr_AST
+  | <DOT> id = <ID> #fieldExpr_AST)  {
+    jjtThis.name = id.image;
+    jjtThis.mPrime = mPrime;
+    jjtThis.arrayIndex = arrayIndex;
+    return jjtThis;  }#methodPrime_AST
 }
 
-void ActualArguments():{}
+List<binaryExpression_AST> ActualArguments():{
+    List<binaryExpression_AST> expressions = new ArrayList<binaryExpression_AST>();
+    binaryExpression_AST expression = null;
+}
 {
-  Expression() (<COMMA> Expression())*
+  expression = Expression()  {
+    expressions.add(expression);  } (<COMMA> expression = Expression()  {
+    expressions.add(expression);  })*  {    return expressions;
+  }
 }
 
-void Expression():{}
+// Same as OR operation since it has lowest precedence
+binaryExpression_AST Expression():{
+    andOperator_AST lhs = null;
+    binaryExpression_AST rhs = null;
+}
 {
-  (OrExpression() (LOOKAHEAD(1) <ASSIGN> #assignOperator_AST Expression())?)  #binaryExpression_AST(>2)
-  /**(LOOKAHEAD(10 )
-  OrExpression() <ASSIGN> #assignOperator_AST Expression()
-  | LOOKAHEAD(10) OrExpression()) #binaryExpression_AST(>1)**/
+  (lhs = AndExpression() (LOOKAHEAD(1) <OR> rhs = Expression())?  {
+    jjtThis.lhs = lhs;
+    jjtThis.rhs = rhs; 
+    return jjtThis;
+  })  #binaryExpression_AST
 }
 
-void OrExpression():{}
-{
-  (AndExpression() (LOOKAHEAD(1) <OR> #orOperator_AST OrExpression())?)  #binaryExpression_AST(>1)
-  /**(LOOKAHEAD(10)
-  AndExpression() <OR> #orOperator_AST OrExpression()
-  | LOOKAHEAD(10) AndExpression()) #binaryExpression_AST(>1)*/
-}
 
-void AndExpression():{}
+andOperator_AST AndExpression():{
+  equality_AST equalityExpr =null;
+  andOperator_AST andExpr = null;
+}
 {
-  (EqualityExpression() (LOOKAHEAD(1) <AND> #andOperator_AST AndExpression())?)  #binaryExpression_AST(>1)
+  (equalityExpr = EqualityExpression() (LOOKAHEAD(1) <AND> andExpr = AndExpression())?  {
+    jjtThis.lhs = equalityExpr;
+    jjtThis.rhs = andExpr;
+    return jjtThis;  })  #andOperator_AST
   /*(LOOKAHEAD(10)
   EqualityExpression() <AND> #andOperator_AST AndExpression()
   | LOOKAHEAD(10) EqualityExpression()) #binaryExpression_AST(>1)*/
 }
 
-void EqualityExpression():{}
+equality_AST EqualityExpression():{}
 {
-  (RelationalExpression() (LOOKAHEAD(1)(LOOKAHEAD(1) (<EQUAL> #equalOperator_AST EqualityExpression())
-  | LOOKAHEAD(1) (<NOTEQUAL> #notEqualOperator_AST EqualityExpression())))?) #binaryExpression_AST(>1)
+  (RelationalExpression() (LOOKAHEAD(1)(LOOKAHEAD(1) (<EQUAL> EqualityExpression())
+  | LOOKAHEAD(1) (<NOTEQUAL> EqualityExpression())))?  {
+    return jjtThis;  }) #equality_AST
   /*(LOOKAHEAD(10)
   RelationalExpression() <EQUAL> #equalOperator_AST EqualityExpression()
   | LOOKAHEAD(10) RelationalExpression()) #binaryExpression_AST(>1)*/
 }
 
-void RelationalExpression():{}
+relational_AST RelationalExpression():{}
 {
-  (SumExpression() (LOOKAHEAD(1)(LOOKAHEAD(1) (<GREATER> #greaterOperator_AST RelationalExpression())
-  | LOOKAHEAD(1) (<GREATEREQ> #greaterEqualOperator_AST RelationalExpression())
-  | LOOKAHEAD(1) (<LESSER> #lesserOperator_AST RelationalExpression())
-  | LOOKAHEAD(1) (<LESSEREQ> #lesserEqualOperator_AST RelationalExpression())))?) #binaryExpression_AST(>1)
+  (SumExpression() (LOOKAHEAD(1)(LOOKAHEAD(1) (<GREATER> RelationalExpression())
+  | LOOKAHEAD(1) (<GREATEREQ> RelationalExpression())
+  | LOOKAHEAD(1) (<LESSER>  RelationalExpression())
+  | LOOKAHEAD(1) (<LESSEREQ> RelationalExpression())))?  {
+    return jjtThis;  }) #relational_AST
   /*(LOOKAHEAD(10) SumExpression() <GREATER> #greaterOperator_AST RelationalExpression()
   |LOOKAHEAD(10) SumExpression() <GREATEREQ> #greaterEqualOperator_AST RelationalExpression()
   |LOOKAHEAD(10) SumExpression() <LESSER> #lesserOperator_AST RelationalExpression()
@@ -681,67 +871,149 @@ void RelationalExpression():{}
   |LOOKAHEAD(10) SumExpression()) #binaryExpression_AST(>1)*/
 }
 
-void SumExpression():{}
+sum_AST SumExpression():{}
 {
-  (FactorExpression() (LOOKAHEAD(1)(LOOKAHEAD(1)(<PLUS> #plusOperator_AST SumExpression())
-  | LOOKAHEAD(1)( <MINUS> #lesserEqualOperator_AST SumExpression())))?) #binaryExpression_AST(>1)
+  (FactorExpression() (LOOKAHEAD(1)(LOOKAHEAD(1)(<PLUS> SumExpression())
+  | LOOKAHEAD(1)( <MINUS> SumExpression())))?  {
+    return jjtThis;  }
+  ) #sum_AST(>1)
   /*
   (LOOKAHEAD(10) FactorExpression() <PLUS> #plusOperator_AST SumExpression()
   |LOOKAHEAD(10) FactorExpression() <MINUS> #minusOperator_AST SumExpression()
   |LOOKAHEAD(10) FactorExpression())#binaryExpression_AST(>1)*/
 }
 
-void FactorExpression():{}
+factor_AST FactorExpression():{}
 {
-  (UnaryExpression() (LOOKAHEAD(1)(LOOKAHEAD(1)( <MULTIPLY> #multiplyOperator_AST FactorExpression())
-  | LOOKAHEAD(1)( <DIVIDE> #divideOperator_AST FactorExpression())
-  | LOOKAHEAD(1)( <MODULO> #moduloOperator_AST FactorExpression())))?) #binaryExpression_AST(>1)
+  (UnaryExpression() (LOOKAHEAD(1)(LOOKAHEAD(1)( <MULTIPLY> FactorExpression())
+  | LOOKAHEAD(1)( <DIVIDE> FactorExpression())
+  | LOOKAHEAD(1)( <MODULO> FactorExpression())))?  {
+    return jjtThis;  }) #factor_AST(>1)
   /*
   (LOOKAHEAD(10) UnaryExpression() <MULTIPLY> #multiplyOperator_AST FactorExpression()
   |LOOKAHEAD(10) UnaryExpression() <DIVIDE> #divideOperator_AST FactorExpression()
   |LOOKAHEAD(10) UnaryExpression())#binaryExpression_AST(>1)*/
 }
 
-void UnaryExpression():{}
+unary_AST UnaryExpression():{
+	binaryExpression_AST expression = null;
+	Token sign = null;
+	SimpleNode primary = null;
+}
 {
-  (<PLUS> #plusOperator_AST| <MINUS> #minusOperator_AST| <NOT> #notOperator_AST) Expression()
-  | Primary()
+  ((((token = <PLUS> | token = <MINUS> | token = <NOT> ) expression = Expression()  {
+    jjtThis.sign = token;
+    jjtThis.expr = expression;  })
+  | (primary = Primary())  {
+    jjtThis.primary = primary;  })  {
+    return jjtThis;  }) #unary_AST
 }
 
-void Primary(): {}
+SimpleNode Primary(): {
+	primaryExisting_AST primaryExist = null;
+	newArray_AST newArray = null;
+}
 {
-  LOOKAHEAD(5) PrimaryExisting()
-  | LOOKAHEAD(5) NewArray()
+  LOOKAHEAD(5) (primaryExist = PrimaryExisting()  {
+    return primaryExist;  })
+  | LOOKAHEAD(5) (newArray = NewArray())  {
+      return newArray;  }
 }
 
-void PrimaryExisting(): {}
+primaryExisting_AST PrimaryExisting(): {
+    SimpleNode p1 = null;
+    primaryExisiting2_AST p2 = null;
+}
 {
-  PrimaryExisting_1()  (PrimaryExisting_2())?
+  (p1 = PrimaryExisting_1()  (p2 = PrimaryExisting_2())?  {
+    jjtThis.p1 = p1;
+    jjtThis.p2 = p2;
+    return jjtThis;  }) #primaryExisting_AST
 }
 
-void PrimaryExisting_1():{}
+SimpleNode PrimaryExisting_1():{
+  Token t = null;
+  List<binaryExpression_AST> arguments = null;
+  List<binaryExpression_AST> arrayIndices = new ArrayList<binaryExpression_AST>();
+  binaryExpression_AST arrayExpr = null;
+  int size = 0;
+}
 {
   LOOKAHEAD(3)
-    Literal()
+    Literal()    {
+      return jjtThis;    }#literal_AST
   | LOOKAHEAD(3)
-    <THIS> #thisExpr_AST
+    <THIS>    {
+      return jjtThis;    }#thisExpr_AST
   | LOOKAHEAD(3)
-    <SUPER> #superExpr_AST
+    <SUPER> {
+      return jjtThis;
+    }#superExpr_AST
   | LOOKAHEAD(3)
-    <LP> Expression() <RP>
+    <LP> Expression() <RP> {
+      return jjtThis;
+    } #binaryExpression_AST
   | LOOKAHEAD(3)
-    <NEW> <ID> <LP> (ActualArguments())? <RP> #newClassExpr_AST
+    (<NEW> t = <ID> <LP> (arguments = ActualArguments())? <RP>    {
+      jjtThis.name = t.image;
+      IntegerMuted intBaseMuted = new IntegerMuted(-1);
+      ClassUnit classUnit = (ClassUnit) SYMBOL_TABLE.lookUp(t.image, UnitType.CLASS, intBaseMuted);
+      jjtThis.arguments =  arguments;
+      if (classUnit == null) {
+        throw new ParseException("Class " + t.image + " has not been declared.");      }
+      jjtThis.classUnit = classUnit;
+      return jjtThis;    }) #newClassExpr_AST
   | LOOKAHEAD(3)
-    <ID>  <LP> (ActualArguments())? <RP> #methodExpr_AST
+    (t = <ID>  <LP> (arguments = ActualArguments())? <RP>    {
+      jjtThis.name = t.image;
+      IntegerMuted intBaseMuted = new IntegerMuted(-1);
+      MethodUnit methodUnit = (MethodUnit) SYMBOL_TABLE.lookUp(t.image, UnitType.METHOD, intBaseMuted);
+      jjtThis.arguments =  arguments;
+      if (methodUnit == null) {
+        throw new ParseException("Method " + t.image + " has not been defined.");
+      }
+      jjtThis.methodUnit = methodUnit;
+      return jjtThis;    }) #methodExpr_AST
   | LOOKAHEAD(3)
-    <ID> (<LSB> Expression() <RSB>)+ #arrayExpr_AST
-  | <ID> #idExpr_AST
+    (t = <ID> (<LSB> arrayExpr = Expression() <RSB>    {
+      size = size + 1;
+      arrayIndices.add(arrayExpr);    })+    {
+      jjtThis.name = t.image;
+      jjtThis.size = size;
+      jjtThis.arrayIndices = arrayIndices;
+      IntegerMuted intBaseMuted = new IntegerMuted(-1);
+      VariableUnit variableUnit = (VariableUnit) SYMBOL_TABLE.lookUp(t.image, UnitType.VARIABLE, intBaseMuted);
+      if (variableUnit == null) {
+        throw new ParseException("Variable " + t.image + " has not been defined.");
+      }
+      jjtThis.variableUnit = variableUnit;
+      return jjtThis;    }) #arrayExpr_AST
+  | t = <ID>  {
+    jjtThis.name = t.image;
+    IntegerMuted intBaseMuted = new IntegerMuted(-1);
+    VariableUnit variableUnit = (VariableUnit) SYMBOL_TABLE.lookUp(t.image, UnitType.VARIABLE, intBaseMuted);
+    if (variableUnit == null) {
+	  throw new ParseException("Variable " + t.image + " has not been defined.");
+	}
+    jjtThis.variableUnit = variableUnit;
+    return jjtThis;
+  } #idExpr_AST
 }
-
-void PrimaryExisting_2():{}
+ 
+primaryExisiting2_AST PrimaryExisting_2():{
+    Token t = null;
+    List<binaryExpression_AST> args = null;
+    binaryExpression_AST arrayExpression = null;
+    primaryExisiting2_AST p2 = null;
+}
 {
-    (<DOT> <ID> #fieldExpr_AST) ((<LP> (ActualArguments())? <RP> #methodExpr_AST)
-    | (<LSB> Expression() <RSB> #arrayExpr_AST))? (PrimaryExisting_2())?
+    ((<DOT> t = <ID> #fieldExpr_AST) ((<LP> (args = ActualArguments())? <RP> #methodExpr_AST)
+    | (<LSB> arrayExpression = Expression() <RSB> #arrayExpr_AST))? (p2 = PrimaryExisting_2())?    {
+      jjtThis.attribute = t.image;
+      jjtThis.arguments = args;
+      jjtThis.arrayExpression = arrayExpression;
+      jjtThis.p2 = p2;
+      return jjtThis;    }) #primaryExisiting2_AST  
     
     /*LOOKAHEAD(5)  
       < DOT > <ID > <LP> (ActualArguments())? <RP> #methodExpr_AST PrimaryExisting_2()
@@ -756,7 +1028,20 @@ void PrimaryExisting_2():{}
     | < DOT > <ID > #fieldExpr_AST*/
 }
 
-void NewArray():{}
+newArray_AST NewArray():{
+	SimpleNode type = null;
+	List<binaryExpression_AST> arrayIndices = new ArrayList<binaryExpression_AST>();
+	binaryExpression_AST arrayIndex  = null;
+	int size  = 0;
+}
 {
-  <NEW> Type() (<LSB> Expression() <RSB>)+
+  (<NEW> type = Type() (<LSB> arrayIndex = Expression() <RSB>  {
+ 	size = size + 1;
+ 	arrayIndices.add(arrayIndex);      })+  {
+    type.typeObj.arraySize = size;
+    type.typeObj.isArray = true;
+    jjtThis.size = size;
+    jjtThis.arrayIndices = arrayIndices;
+    jjtThis.typeObj = type.typeObj;
+    return jjtThis;  })#newArray_AST
 }
