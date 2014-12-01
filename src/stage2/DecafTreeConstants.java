@@ -25,29 +25,31 @@ public interface DecafTreeConstants
   public int JJTINTEXPR_AST = 19;
   public int JJTCHAREXPR_AST = 20;
   public int JJTSTRINGEXPR_AST = 21;
-  public int JJTFIELDEXPR_AST = 22;
-  public int JJTARRAYEXPR_AST = 23;
-  public int JJTIDEXPR_AST = 24;
-  public int JJTTHISEXPR_AST = 25;
-  public int JJTSUPEREXPR_AST = 26;
-  public int JJTNEWCLASSEXPR_AST = 27;
-  public int JJTMETHODCALL_AST = 28;
-  public int JJTMETHODCALL1_AST = 29;
-  public int JJTMETHODEXPR_AST = 30;
-  public int JJTMETHODCALL2_AST = 31;
-  public int JJTMETHODPARENT_AST = 32;
-  public int JJTMETHODPRIME_AST = 33;
-  public int JJTBINARYEXPRESSION_AST = 34;
-  public int JJTANDOPERATOR_AST = 35;
-  public int JJTEQUALITY_AST = 36;
-  public int JJTRELATIONAL_AST = 37;
-  public int JJTSUM_AST = 38;
-  public int JJTFACTOR_AST = 39;
-  public int JJTUNARY_AST = 40;
-  public int JJTPRIMARYEXISTING_AST = 41;
-  public int JJTLITERAL_AST = 42;
-  public int JJTPRIMARYEXISITING2_AST = 43;
-  public int JJTNEWARRAY_AST = 44;
+  public int JJTFIELDACCESS_AST = 22;
+  public int JJTFIELDEXPR_AST = 23;
+  public int JJTARRAYEXPR_AST = 24;
+  public int JJTIDEXPR_AST = 25;
+  public int JJTFIELDACCESS1_AST = 26;
+  public int JJTTHISEXPR_AST = 27;
+  public int JJTSUPEREXPR_AST = 28;
+  public int JJTNEWCLASSEXPR_AST = 29;
+  public int JJTMETHODCALL_AST = 30;
+  public int JJTMETHODCALL1_AST = 31;
+  public int JJTMETHODEXPR_AST = 32;
+  public int JJTMETHODCALL2_AST = 33;
+  public int JJTMETHODPARENT_AST = 34;
+  public int JJTMETHODPRIME_AST = 35;
+  public int JJTBINARYEXPRESSION_AST = 36;
+  public int JJTANDOPERATOR_AST = 37;
+  public int JJTEQUALITY_AST = 38;
+  public int JJTRELATIONAL_AST = 39;
+  public int JJTSUM_AST = 40;
+  public int JJTFACTOR_AST = 41;
+  public int JJTUNARY_AST = 42;
+  public int JJTPRIMARYEXISTING_AST = 43;
+  public int JJTLITERAL_AST = 44;
+  public int JJTPRIMARYEXISITING2_AST = 45;
+  public int JJTNEWARRAY_AST = 46;
 
 
   public String[] jjtNodeName = {
@@ -73,9 +75,11 @@ public interface DecafTreeConstants
     "intExpr_AST",
     "charExpr_AST",
     "stringExpr_AST",
+    "fieldAccess_AST",
     "fieldExpr_AST",
     "arrayExpr_AST",
     "idExpr_AST",
+    "fieldAccess1_AST",
     "thisExpr_AST",
     "superExpr_AST",
     "newClassExpr_AST",
@@ -98,4 +102,4 @@ public interface DecafTreeConstants
     "newArray_AST",
   };
 }
-/* JavaCC - OriginalChecksum=c1f456f895b458975e59a67f0877a7e3 (do not edit this line) */
+/* JavaCC - OriginalChecksum=c8c8529e36fe64304f308d2a979cec9e (do not edit this line) */

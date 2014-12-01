@@ -646,20 +646,39 @@ assignOperator_AST Assignment():{}
     return jjtThis;  })#assignOperator_AST
 }
 
-void FieldAccess():{}
+fieldAccess_AST FieldAccess():{}
 {
-  FieldAccess_1()(MethodPrime())? 
+  FieldAccess_1()(MethodPrime())?  {
+    return jjtThis;  }#fieldAccess_AST
 } 
 
-void FieldAccess_1():{}
+fieldAccess1_AST FieldAccess_1():{
+  SimpleNode primaryFieldAccess = null;
+  Token id =null;
+  binaryExpression_AST index = null;
+  List<binaryExpression_AST> arrayIndices = null;
+}
 {
-  LOOKAHEAD(6)
-  (PrimaryFieldAccess() <DOT> <ID> #fieldExpr_AST) ((<LSB> Expression() <RSB> {jjtThis.size += 1;})+ #arrayExpr_AST)
+  (LOOKAHEAD(6)
+  (primaryFieldAccess = PrimaryFieldAccess() <DOT> id = <ID> #fieldExpr_AST) ((<LSB> index = Expression() <RSB> {
+  	if (arrayIndices == null) {
+  	  arrayIndices = new ArrayList<binaryExpression_AST>();  	}  
+	arrayIndices.add(index);
+  })+ #arrayExpr_AST)
   | LOOKAHEAD(6)
-  PrimaryFieldAccess() <DOT> <ID> #fieldExpr_AST
+  primaryFieldAccess = PrimaryFieldAccess() <DOT> id = <ID> #fieldExpr_AST
   | LOOKAHEAD(6)
-  (<ID> #idExpr_AST) ((<LSB> Expression() <RSB> {jjtThis.size += 1;})+ #arrayExpr_AST) 
-  | <ID> #idExpr_AST
+  (id = <ID> #idExpr_AST) ((<LSB> index = Expression() <RSB> {
+    if (arrayIndices == null) {
+  	  arrayIndices = new ArrayList<binaryExpression_AST>();
+  	}  
+	arrayIndices.add(index);
+  })+ #arrayExpr_AST) 
+  | id = <ID> #idExpr_AST)  {
+    jjtThis.name = id.image;
+    jjtThis.arrayIndices = arrayIndices;
+    jjtThis.primaryFieldAccess = primaryFieldAccess;
+    return jjtThis;  }#fieldAccess1_AST
 }
 
 SimpleNode PrimaryFieldAccess():{

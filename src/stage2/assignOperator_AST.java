@@ -4,6 +4,8 @@ package stage2;
 
 public
 class assignOperator_AST extends SimpleNode {
+  fieldAccess_AST lhs;
+  binaryExpression_AST rhs;
   public assignOperator_AST(int id) {
     super(id);
   }

@@ -9,12 +9,7 @@ public interface DecafVisitor
   public Object visit(boolean_AST node, ScopeElement data);
   public Object visit(id_AST node, ScopeElement data);
   public Object visit(voidType_AST node, ScopeElement data);
-  public Object visit(varDeclStat_AST node, ScopeElement data);
-  public Object visit(breakStat_AST node, ScopeElement data);
-  public Object visit(continueStat_AST node, ScopeElement data);
-  public Object visit(emptyStat_AST node, ScopeElement data);
   public Object visit(fieldExpr_AST node, ScopeElement data);
-  
   
 	Object visitStart_AST(start_AST node, ScopeElement data);
 	Object visitBlock_AST(block_AST node, ScopeElement data);
@@ -52,5 +47,11 @@ public interface DecafVisitor
 	public Object visitMethodPrime(methodPrime_AST node, ScopeElement data);
 	public Object visitMethodCall2(methodCall2_AST node, ScopeElement data);
 	public Object visitAssignOperator(assignOperator_AST node, ScopeElement data);
+	public Object visitFieldAccess(fieldAccess_AST node, ScopeElement data);
+	public Object visitFieldAccess1(fieldAccess1_AST node, ScopeElement data);
+	public Object visitVarDeclStat(varDeclStat_AST node, ScopeElement data);
+	public Object visitBreakStat(breakStat_AST node, ScopeElement data);
+	public Object visitContinueStat(continueStat_AST node, ScopeElement data);
+	public Object visitEmptyStat(emptyStat_AST node, ScopeElement data);
 }
 /* JavaCC - OriginalChecksum=047d28135a64d5f568f450fd59975f2b (do not edit this line) */

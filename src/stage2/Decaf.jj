@@ -1219,69 +1219,97 @@ assignOperator_AST Assignment():{}
 /*@egen*/                   
 }
 
-void FieldAccess():{}
+fieldAccess_AST FieldAccess():{}
 {
-  FieldAccess_1()(MethodPrime())? 
+  FieldAccess_1()(MethodPrime())?/*@bgen(jjtree) fieldAccess_AST */
+  {
+    fieldAccess_AST jjtn001 = new fieldAccess_AST(JJTFIELDACCESS_AST);
+    boolean jjtc001 = true;
+    jjtree.openNodeScope(jjtn001);
+  }
+  try {
+/*@egen*//*@bgen(jjtree)*/
+  {
+    jjtree.closeNodeScope(jjtn001, true);
+    jjtc001 = false;
+  }
+/*@egen*/  {
+    return jjtn001;  }/*@bgen(jjtree)*/
+  } finally {
+    if (jjtc001) {
+      jjtree.closeNodeScope(jjtn001, true);
+    }
+  }
+/*@egen*/                
 } 
 
-void FieldAccess_1():{}
+fieldAccess1_AST FieldAccess_1():{
+  SimpleNode primaryFieldAccess = null;
+  Token id =null;
+  binaryExpression_AST index = null;
+  List<binaryExpression_AST> arrayIndices = null;
+}
 {
-  LOOKAHEAD(6)
-  (PrimaryFieldAccess() <DOT>/*@bgen(jjtree) fieldExpr_AST */
-                              {
-                                fieldExpr_AST jjtn001 = new fieldExpr_AST(JJTFIELDEXPR_AST);
-                                boolean jjtc001 = true;
-                                jjtree.openNodeScope(jjtn001);
-                              }
-                              try {
-/*@egen*/ <ID>/*@bgen(jjtree)*/
-                              } finally {
-                                if (jjtc001) {
-                                  jjtree.closeNodeScope(jjtn001, true);
-                                }
-                              }
+  (LOOKAHEAD(6)
+  (primaryFieldAccess = PrimaryFieldAccess() <DOT>/*@bgen(jjtree) fieldExpr_AST */
+                                                   {
+                                                     fieldExpr_AST jjtn001 = new fieldExpr_AST(JJTFIELDEXPR_AST);
+                                                     boolean jjtc001 = true;
+                                                     jjtree.openNodeScope(jjtn001);
+                                                   }
+                                                   try {
+/*@egen*/ id = <ID>/*@bgen(jjtree)*/
+                                                   } finally {
+                                                     if (jjtc001) {
+                                                       jjtree.closeNodeScope(jjtn001, true);
+                                                     }
+                                                   }
 /*@egen*/               ) (/*@bgen(jjtree) arrayExpr_AST */
-                                                    {
-                                                      arrayExpr_AST jjtn002 = new arrayExpr_AST(JJTARRAYEXPR_AST);
-                                                      boolean jjtc002 = true;
-                                                      jjtree.openNodeScope(jjtn002);
-                                                    }
-                                                    try {
-/*@egen*/(<LSB> Expression() <RSB> {jjtn002.size += 1;})+/*@bgen(jjtree)*/
-                                                    } catch (Throwable jjte002) {
-                                                      if (jjtc002) {
-                                                        jjtree.clearNodeScope(jjtn002);
-                                                        jjtc002 = false;
-                                                      } else {
-                                                        jjtree.popNode();
-                                                      }
-                                                      if (jjte002 instanceof RuntimeException) {
-                                                        throw (RuntimeException)jjte002;
-                                                      }
-                                                      if (jjte002 instanceof ParseException) {
-                                                        throw (ParseException)jjte002;
-                                                      }
-                                                      throw (Error)jjte002;
-                                                    } finally {
-                                                      if (jjtc002) {
-                                                        jjtree.closeNodeScope(jjtn002, true);
-                                                      }
-                                                    }
+                                                                              {
+                                                                                arrayExpr_AST jjtn002 = new arrayExpr_AST(JJTARRAYEXPR_AST);
+                                                                                boolean jjtc002 = true;
+                                                                                jjtree.openNodeScope(jjtn002);
+                                                                              }
+                                                                              try {
+/*@egen*/(<LSB> index = Expression() <RSB> {
+  	if (arrayIndices == null) {
+  	  arrayIndices = new ArrayList<binaryExpression_AST>();  	}  
+	arrayIndices.add(index);
+  })+/*@bgen(jjtree)*/
+                                                                              } catch (Throwable jjte002) {
+                                                                                if (jjtc002) {
+                                                                                  jjtree.clearNodeScope(jjtn002);
+                                                                                  jjtc002 = false;
+                                                                                } else {
+                                                                                  jjtree.popNode();
+                                                                                }
+                                                                                if (jjte002 instanceof RuntimeException) {
+                                                                                  throw (RuntimeException)jjte002;
+                                                                                }
+                                                                                if (jjte002 instanceof ParseException) {
+                                                                                  throw (ParseException)jjte002;
+                                                                                }
+                                                                                throw (Error)jjte002;
+                                                                              } finally {
+                                                                                if (jjtc002) {
+                                                                                  jjtree.closeNodeScope(jjtn002, true);
+                                                                                }
+                                                                              }
 /*@egen*/               )
   | LOOKAHEAD(6)
-  PrimaryFieldAccess() <DOT>/*@bgen(jjtree) fieldExpr_AST */
-                             {
-                               fieldExpr_AST jjtn003 = new fieldExpr_AST(JJTFIELDEXPR_AST);
-                               boolean jjtc003 = true;
-                               jjtree.openNodeScope(jjtn003);
-                             }
-                             try {
-/*@egen*/ <ID>/*@bgen(jjtree)*/
-                             } finally {
-                               if (jjtc003) {
-                                 jjtree.closeNodeScope(jjtn003, true);
-                               }
-                             }
+  primaryFieldAccess = PrimaryFieldAccess() <DOT>/*@bgen(jjtree) fieldExpr_AST */
+                                                  {
+                                                    fieldExpr_AST jjtn003 = new fieldExpr_AST(JJTFIELDEXPR_AST);
+                                                    boolean jjtc003 = true;
+                                                    jjtree.openNodeScope(jjtn003);
+                                                  }
+                                                  try {
+/*@egen*/ id = <ID>/*@bgen(jjtree)*/
+                                                  } finally {
+                                                    if (jjtc003) {
+                                                      jjtree.closeNodeScope(jjtn003, true);
+                                                    }
+                                                  }
 /*@egen*/               
   | LOOKAHEAD(6)
   (/*@bgen(jjtree) idExpr_AST */
@@ -1291,39 +1319,44 @@ void FieldAccess_1():{}
      jjtree.openNodeScope(jjtn004);
    }
    try {
-/*@egen*/<ID>/*@bgen(jjtree)*/
+/*@egen*/id = <ID>/*@bgen(jjtree)*/
    } finally {
      if (jjtc004) {
        jjtree.closeNodeScope(jjtn004, true);
      }
    }
 /*@egen*/            ) (/*@bgen(jjtree) arrayExpr_AST */
-                      {
-                        arrayExpr_AST jjtn005 = new arrayExpr_AST(JJTARRAYEXPR_AST);
-                        boolean jjtc005 = true;
-                        jjtree.openNodeScope(jjtn005);
-                      }
-                      try {
-/*@egen*/(<LSB> Expression() <RSB> {jjtn005.size += 1;})+/*@bgen(jjtree)*/
-                      } catch (Throwable jjte005) {
-                        if (jjtc005) {
-                          jjtree.clearNodeScope(jjtn005);
-                          jjtc005 = false;
-                        } else {
-                          jjtree.popNode();
-                        }
-                        if (jjte005 instanceof RuntimeException) {
-                          throw (RuntimeException)jjte005;
-                        }
-                        if (jjte005 instanceof ParseException) {
-                          throw (ParseException)jjte005;
-                        }
-                        throw (Error)jjte005;
-                      } finally {
-                        if (jjtc005) {
-                          jjtree.closeNodeScope(jjtn005, true);
-                        }
-                      }
+                           {
+                             arrayExpr_AST jjtn005 = new arrayExpr_AST(JJTARRAYEXPR_AST);
+                             boolean jjtc005 = true;
+                             jjtree.openNodeScope(jjtn005);
+                           }
+                           try {
+/*@egen*/(<LSB> index = Expression() <RSB> {
+    if (arrayIndices == null) {
+  	  arrayIndices = new ArrayList<binaryExpression_AST>();
+  	}  
+	arrayIndices.add(index);
+  })+/*@bgen(jjtree)*/
+                           } catch (Throwable jjte005) {
+                             if (jjtc005) {
+                               jjtree.clearNodeScope(jjtn005);
+                               jjtc005 = false;
+                             } else {
+                               jjtree.popNode();
+                             }
+                             if (jjte005 instanceof RuntimeException) {
+                               throw (RuntimeException)jjte005;
+                             }
+                             if (jjte005 instanceof ParseException) {
+                               throw (ParseException)jjte005;
+                             }
+                             throw (Error)jjte005;
+                           } finally {
+                             if (jjtc005) {
+                               jjtree.closeNodeScope(jjtn005, true);
+                             }
+                           }
 /*@egen*/               ) 
   |/*@bgen(jjtree) idExpr_AST */
     {
@@ -1332,13 +1365,35 @@ void FieldAccess_1():{}
       jjtree.openNodeScope(jjtn006);
     }
     try {
-/*@egen*/ <ID>/*@bgen(jjtree)*/
+/*@egen*/ id = <ID>/*@bgen(jjtree)*/
     } finally {
       if (jjtc006) {
         jjtree.closeNodeScope(jjtn006, true);
       }
     }
-/*@egen*/            
+/*@egen*/            )/*@bgen(jjtree) fieldAccess1_AST */
+  {
+    fieldAccess1_AST jjtn007 = new fieldAccess1_AST(JJTFIELDACCESS1_AST);
+    boolean jjtc007 = true;
+    jjtree.openNodeScope(jjtn007);
+  }
+  try {
+/*@egen*//*@bgen(jjtree)*/
+  {
+    jjtree.closeNodeScope(jjtn007, true);
+    jjtc007 = false;
+  }
+/*@egen*/  {
+    jjtn007.name = id.image;
+    jjtn007.arrayIndices = arrayIndices;
+    jjtn007.primaryFieldAccess = primaryFieldAccess;
+    return jjtn007;  }/*@bgen(jjtree)*/
+  } finally {
+    if (jjtc007) {
+      jjtree.closeNodeScope(jjtn007, true);
+    }
+  }
+/*@egen*/                 
 }
 
 SimpleNode PrimaryFieldAccess():{

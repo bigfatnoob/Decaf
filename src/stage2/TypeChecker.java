@@ -15,7 +15,8 @@ public class TypeChecker implements DecafVisitor{
 	
 	@Override
 	public Object visit(SimpleNode node, ScopeElement data) {
-		// TODO Auto-generated method stub
+		// Should not come here
+		System.out.println("What is the program doing here?");
 		return null;
 	}
 
@@ -34,37 +35,46 @@ public class TypeChecker implements DecafVisitor{
 
 	@Override
 	public Object visit(int_AST node, ScopeElement data) {
-		// TODO Auto-generated method stub
+		// Handled in jjt
 		return null;
 	}
 
 	@Override
 	public Object visit(char_AST node, ScopeElement data) {
-		// TODO Auto-generated method stub
+		// Handled in jjt
 		return null;
 	}
 
 	@Override
 	public Object visit(boolean_AST node, ScopeElement data) {
-		// TODO Auto-generated method stub
+		// Handled in jjt
 		return null;
 	}
 
 	@Override
 	public Object visit(id_AST node, ScopeElement data) {
-		// TODO Auto-generated method stub
+		// Handled in jjt
 		return null;
 	}
 
 	@Override
 	public Object visitAssignOperator(assignOperator_AST node, ScopeElement data) {
-		
+		fieldAccess_AST lhs = node.lhs;
+		binaryExpression_AST rhs = node.rhs;
+		lhs.jjtAccept(this, data);
+		rhs.jjtAccept(this, data);
+		if (!TypeEquality.eq(lhs.typeObj, rhs.typeObj, null)) {
+			System.out.println("LHS : " +lhs.typeObj.toString());
+			System.out.println("RHS : " +rhs.typeObj.toString());
+			decafError.numErrors++;
+			decafError.error("Left hand side and right hand side have to be of the same type", new Position(0, 0, 0, 0));
+		}
 		return null;
 	}
 
 	@Override
 	public Object visit(voidType_AST node, ScopeElement data) {
-		// TODO Auto-generated method stub
+		// Handled in jjt
 		return null;
 	}
 
@@ -147,10 +157,16 @@ public class TypeChecker implements DecafVisitor{
 	@Override
 	public Object visitReturnStat(returnStat_AST node, ScopeElement data) {
 		binaryExpression_AST returnStmt = node.expr;
+		MethodUnit methodUnit = (MethodUnit) data.getScopeUnit().getUnit();
+		Type methodReturnType = methodUnit.getReturnType().typeObj;
+		if (returnStmt == null && methodReturnType.name.equals("null")){
+			return null;
+		}else if (returnStmt == null) {
+			decafError.numErrors++;
+			decafError.error("Expecting " +methodReturnType.name+ " return type", new Position(0, 0, 0, 0));
+		}
 		returnStmt.jjtAccept(this, data);
 		if (data.getScopeUnit().getUnit() instanceof MethodUnit){
-			MethodUnit methodUnit = (MethodUnit) data.getScopeUnit().getUnit();
-			Type methodReturnType = methodUnit.getReturnType().typeObj;
 			if (!TypeEquality.eq(returnStmt.typeObj, methodReturnType, null)) {
 				decafError.numErrors++;
 				decafError.error("Invalid return type in method " + methodUnit.getName(), new Position(0, 0, 0, 0));
@@ -180,32 +196,32 @@ public class TypeChecker implements DecafVisitor{
 	}
 
 	@Override
-	public Object visit(varDeclStat_AST node, ScopeElement data) {
-		// TODO Auto-generated method stub
+	public Object visitVarDeclStat(varDeclStat_AST node, ScopeElement data) {
+		// DO Nothing
 		return null;
 	}
 
 	@Override
-	public Object visit(breakStat_AST node, ScopeElement data) {
-		// TODO Auto-generated method stub
+	public Object visitBreakStat(breakStat_AST node, ScopeElement data) {
+		//Do Nothing
 		return null;
 	}
 
 	@Override
-	public Object visit(continueStat_AST node, ScopeElement data) {
-		// TODO Auto-generated method stub
+	public Object visitContinueStat(continueStat_AST node, ScopeElement data) {
+		// Do Nothing
 		return null;
 	}
 
 	@Override
-	public Object visit(emptyStat_AST node, ScopeElement data) {
-		// TODO Auto-generated method stub
+	public Object visitEmptyStat(emptyStat_AST node, ScopeElement data) {
+		// Do Nothin
 		return null;
 	}
 
 	@Override
 	public Object visit(fieldExpr_AST node, ScopeElement data) {
-		// TODO Auto-generated method stub
+		// Need not be handled
 		return null;
 	}
 
@@ -312,12 +328,13 @@ public class TypeChecker implements DecafVisitor{
 		Iterator<Unit> memberUnits = classUnit.getMembersAndMethods().listIterator();
 		Unit memberUnit = null;
 		MethodUnit methodUnit = null;
+		@SuppressWarnings("unused")
 		VariableUnit variableUnit = null;
 		while (memberUnits.hasNext()) {
 			memberUnit = memberUnits.next();
-			if (memberUnit instanceof VariableUnit) {
-				// TODO call variable;
+			if (memberUnit instanceof VariableUnit) {			
 				variableUnit = (VariableUnit) memberUnit;
+				// Handled in jjt
 			} else {
 				methodUnit = (MethodUnit) memberUnit;
 				sf.enterNewScopeForUnit(methodUnit, MODE);
@@ -672,6 +689,7 @@ public class TypeChecker implements DecafVisitor{
 			mParent.jjtAccept(this, data);
 			mPrime.actualArgs = actualArgs;
 			mPrime.callerScope = getClassScope(mParent.typeObj.name);
+			mPrime.isMethod = true;
 			mPrime.jjtAccept(this, data);
 			node.typeObj = mPrime.typeObj;
 		} else if (mPrime != null && basicTypes.contains(mParent.typeObj.name)) {
@@ -696,7 +714,9 @@ public class TypeChecker implements DecafVisitor{
 	  ScopeElement callerScope = node.callerScope;
 	  Type typeObj = null;
 	  if (mPrime != null) {
+		  mPrime.callerScope = callerScope;
 		  mPrime.actualArgs = actualArgs;
+		  mPrime.isMethod = true;
 		  mPrime.jjtAccept(this, data);
 		  typeObj = mPrime.typeObj;
 	  } else {
@@ -805,17 +825,116 @@ public class TypeChecker implements DecafVisitor{
 		if (mPrime!= null) {
 			VariableUnit vUnit = cUnit.getVariable(name);
 			mPrime.callerScope = getClassScope(vUnit.getType().typeObj.name);
+			mPrime.isMethod = node.isMethod;
 			mPrime.jjtAccept(this, data);
 			node.typeObj = mPrime.typeObj;
 		} else {
-			MethodUnit mUnit = cUnit.getMethod(name, node.actualArgs);
-			if (mUnit == null) {
-				decafError.numErrors++;
-				decafError.error("No Method name " +name, new Position(0, 0, 0, 0));
+			if (node.isMethod) {
+				MethodUnit mUnit = cUnit.getMethod(name, node.actualArgs);
+				if (mUnit == null) {
+					decafError.numErrors++;
+					decafError.error("No Method name " +name, new Position(0, 0, 0, 0));
+				}
+				node.typeObj = mUnit.getReturnType().typeObj;
+			} else {
+				VariableUnit vUnit = cUnit.getVariable(name);
+				node.typeObj = vUnit.getType().typeObj;
 			}
-			node.typeObj = mUnit.getReturnType().typeObj;
+			
 		}
 		
+		return null;
+	}
+
+	@Override
+	public Object visitFieldAccess(fieldAccess_AST node, ScopeElement data) {
+		fieldAccess1_AST fAccess1 = node.fAccess1;
+		methodPrime_AST mPrime = node.mPrime;
+		fAccess1.jjtAccept(this, data);
+		if (mPrime!= null) {
+			if (fAccess1.typeObj.isClass && !fAccess1.typeObj.isClass) {
+				mPrime.isMethod = false;
+				mPrime.callerScope = getClassScope(fAccess1.typeObj.name);
+				mPrime.jjtAccept(this, data);
+				node.typeObj = mPrime.typeObj;
+			} else {
+				System.out.println("Error line : 845  for field access " + node.toString() );
+			}
+		} else {
+			node.typeObj = fAccess1.typeObj;
+		}
+		return null;
+	}
+
+	@Override
+	public Object visitFieldAccess1(fieldAccess1_AST node, ScopeElement data) {
+		SimpleNode p1 = node.primaryFieldAccess;
+		String name = node.name;
+		List<binaryExpression_AST> arrayIndices = node.arrayIndices;
+		VariableUnit vUnit = null;
+		if (p1 != null) {
+			ScopeElement callerScope = null;
+			if (p1 instanceof literal_AST) {
+				literal_AST literal = (literal_AST) p1;
+				literal.jjtAccept(this, data);
+				if (literal.typeObj.isClass) {
+					callerScope = getClassScope(literal.typeObj.name);
+				}
+			} else if (p1 instanceof thisExpr_AST) {
+				thisExpr_AST thisExpr = (thisExpr_AST) p1;
+				thisExpr.jjtAccept(this, data);
+				data = getClassScope(data);
+				thisExpr.typeObj.name = data.getScopeUnit().getUnit().getName();
+				thisExpr.typeObj.isClass = true;
+			} else if (p1 instanceof superExpr_AST) {
+				superExpr_AST superExpr = (superExpr_AST) p1;
+				superExpr.jjtAccept(this, data);
+				data = getSuperClassScope(data);
+				superExpr.typeObj.name = data.getScopeUnit().getUnit().getName();
+				superExpr.typeObj.isClass = true;
+			} else if (p1 instanceof newClassExpr_AST) {
+				newClassExpr_AST newClass = (newClassExpr_AST) p1;
+				newClass.jjtAccept(this, data);
+				if (newClass.typeObj.isClass) {
+					callerScope = getClassScope(newClass.typeObj.name);
+				}
+			}
+			if (callerScope!= null) {
+				ClassUnit cUnit = (ClassUnit)callerScope.getScopeUnit().getUnit();
+				vUnit = cUnit.getVariable(name);
+				node.typeObj = vUnit.getType().typeObj;
+				if ((arrayIndices == null) && (!node.typeObj.isArray)) {
+					// Variable
+				} else if (arrayIndices!=null && (arrayIndices.size() == node.typeObj.arraySize)) {
+					// Variable in array
+					node.typeObj.isArray = false;
+				} else if (arrayIndices!=null && (arrayIndices.size() < node.typeObj.arraySize)) {
+					// array
+					node.typeObj.arraySize = node.typeObj.arraySize - arrayIndices.size();
+					node.typeObj.isArray = true;
+				} else {
+					// TODO error handle
+				}
+			} else{
+				IntegerMuted intBaseMuted = new IntegerMuted(-1);
+				vUnit = (VariableUnit) SYMBOL_TABLE.lookUp(name, UnitType.VARIABLE, intBaseMuted);
+				node.typeObj = vUnit.getType().typeObj;
+				if ((arrayIndices == null) && (!node.typeObj.isArray)) {
+					// Variable
+				} else if (arrayIndices!=null && (arrayIndices.size() == node.typeObj.arraySize)) {
+					// Variable in array
+					node.typeObj.isArray = false;
+				} else if (arrayIndices!=null && (arrayIndices.size() < node.typeObj.arraySize)) {
+					// array
+					node.typeObj.arraySize = node.typeObj.arraySize - arrayIndices.size();
+					node.typeObj.isArray = true;
+				} else {
+					// TODO error handle
+				}
+			}
+		} else {
+			
+		}
 		return null;
 	}
 }

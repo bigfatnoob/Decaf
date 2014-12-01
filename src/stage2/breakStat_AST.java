@@ -15,7 +15,7 @@ class breakStat_AST extends SimpleNode {
 
   /** Accept the visitor. **/
   public Object jjtAccept(DecafVisitor visitor, ScopeElement data) {
-    return visitor.visit(this, data);
+    return visitor.visitBreakStat(this, data);
   }
 }
 /* JavaCC - OriginalChecksum=b697bc099ad72ecb280ae16bae7803f0 (do not edit this line) */

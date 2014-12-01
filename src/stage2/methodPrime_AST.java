@@ -11,6 +11,7 @@ class methodPrime_AST extends SimpleNode {
   binaryExpression_AST arrayIndex;
   ScopeElement callerScope;
   List<binaryExpression_AST> actualArgs;
+  boolean isMethod = true;
   public methodPrime_AST(int id) {
     super(id);
   }
