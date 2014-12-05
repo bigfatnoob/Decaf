@@ -10,21 +10,21 @@ public class Test {
 	
 	public final static String FOLDER_PATH = "X:/NCSU/CSC-512 Compilers/Project/DecafTests/";
 	Test2 x;
-	/*static public void main(String[] args) throws Exception {
+	static public void main(String[] args) throws Exception {
 		final File folder = new File(FOLDER_PATH);
 		
-		String[] mainArgs = new String[1];
+		/*String[] mainArgs = new String[1];
 		for (final File file: folder.listFiles()) {
 			System.out.println(file.getName());
 			mainArgs[0] = FOLDER_PATH+file.getName();
 			Decaf.main(mainArgs);
 			System.out.println();
-		}
+		}*/
 		String[] mainArgs = new String[1];
-		mainArgs[0] = FOLDER_PATH+"animals.decaf";
+		mainArgs[0] = FOLDER_PATH+"cars.decaf";
 		Decaf.main(mainArgs);
-	}*/
-	public static void main(String[] args) {
+	}
+	/*public static void main(String[] args) {
 		Test3 t3 = new Test3();
 		t3.name = "a";
 		Test2 t2 = t3;
@@ -34,7 +34,7 @@ public class Test {
 	}
 	public static void modifier(Test2 test2){
 		test2.name = "b";
-	}
+	}*/
 }
 
 class Test2{

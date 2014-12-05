@@ -1,0 +1,41 @@
+class Object
+{
+  public Object(){
+  
+  }
+}
+
+class String extends Object
+{
+  public String() {
+  
+  }
+}
+
+class IO extends Object
+{
+  private IO(){
+  
+  }
+  public static void putChar(char charBotMod){
+  
+  }
+  public static void putInt(int intBotMod){
+  
+  }
+  public static void putString(String stringBotMod){
+  
+  }
+  public static int peek(){
+  
+  }
+  public static int getChar(){
+  
+  }
+  public static int getInt(){
+  
+  }
+  public static String getLine(){
+  
+  }
+}

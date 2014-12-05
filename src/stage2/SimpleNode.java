@@ -10,7 +10,7 @@ class SimpleNode implements Node {
   protected int id;
   protected Object value;
   protected Decaf parser;
-  Type typeObj;
+  Type typeObj = new Type();
 
   public SimpleNode(int i) {
     id = i;

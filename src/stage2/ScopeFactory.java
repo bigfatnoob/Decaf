@@ -60,36 +60,56 @@ public class ScopeFactory {
 	public ScopeUnit enterNewScope(boolean isProgramStart, int MODE) {
 		ScopeUnit newScopeUnit = null;
 		if (MODE == 0) {
-			ScopeElement newScope = new ScopeElement();
+			ScopeElement newScope = null;
+			boolean donotAdd = false;
+			if (isProgramStart && (currentScope.getKids().size() > 0)) {
+				newScope = currentScope.getKids().get(0);
+				donotAdd = true;
+			} else {
+				newScope = new ScopeElement();
+			}
 			newScopeUnit = new ScopeUnit();
 			if (isProgramStart) {
 				newScope.setProgram(true);
 			} else {
 				newScope.setBlock(true);
 			}
-			currentScope.addKid(newScope);
-			newScope.setScopeUnit(newScopeUnit);
-			newScope.setLevel(blockScopeLevel);
+			if (!donotAdd) {
+				currentScope.addKid(newScope);
+				newScope.setScopeUnit(newScopeUnit);
+				newScope.setLevel(blockScopeLevel);
+			}
 			currentScope = newScope;
 		} else {
-			ScopeElement tempScope = null;
-			tempScope = currentScope.getKids().get(currentScope.getKidLevel().getValue());
-			currentScope.setKidLevel(currentScope.getKidLevel().getValue() + 1);
-			currentScope= tempScope;
-			newScopeUnit = currentScope.getScopeUnit();
+			try {
+				ScopeElement tempScope = null;
+				tempScope = currentScope.getKids().get(currentScope.getKidLevel().getValue());
+				currentScope.setKidLevel(currentScope.getKidLevel().getValue() + 1);
+				currentScope= tempScope;
+				newScopeUnit = currentScope.getScopeUnit();
+			} catch (Exception e) {
+				currentScope.doNotExit = true;
+				return currentScope.getScopeUnit();
+				//e.printStackTrace();
+			}
 		}
 		
-		blockScopeLevel++;
+		++blockScopeLevel;
 		return newScopeUnit;
 	}
 	
 	
 	public ScopeUnit exitLastScope(int MODE) {
-		blockScopeLevel--;
-		ScopeUnit lastScopeUnit = currentScope.getScopeUnit();
-		if (MODE == 1) {
-			currentScope.setKidLevel(0);
+		if (currentScope.doNotExit){
+			currentScope.doNotExit = false;
+			return currentScope.getScopeUnit();
 		}
+		--blockScopeLevel;
+		ScopeUnit lastScopeUnit = currentScope.getScopeUnit();
+		/*if (MODE == 1) {
+			currentScope.setKidLevel(0);
+		}*/
+		currentScope.setKidLevel(0);
 		currentScope = currentScope.getParent();
 		return lastScopeUnit;
 	}
@@ -106,13 +126,17 @@ public class ScopeFactory {
 			currentScope = newScope;
 		} else {
 			ScopeElement tempScope = null;
+			if (currentScope.getKidLevel().getValue() == currentScope.getKids().size()) {
+				currentScope.setKidLevel(0);
+			}
 			tempScope = currentScope.getKids().get(currentScope.getKidLevel().getValue());
 			currentScope.setKidLevel(currentScope.getKidLevel().getValue() + 1);
 			currentScope= tempScope;
 			newScopeUnit = currentScope.getScopeUnit();
+			
 		}
 		
-		blockScopeLevel++;
+		++blockScopeLevel;
 		return newScopeUnit; 
 	}
 	

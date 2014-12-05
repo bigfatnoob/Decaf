@@ -4,6 +4,7 @@
 package stage2;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,6 +16,8 @@ import java.util.Map;
 public class SymbolTable {
 	private Map<String, List<TableEntry>> table;
 	private static SymbolTable symbolTable;
+	private final static List<String> builtinTypes = new ArrayList<String>(Arrays.asList("Object","String","IO"));
+	
 	
 	private SymbolTable(){
 		this.table = new HashMap<String, List<TableEntry>>();
@@ -76,26 +79,29 @@ public class SymbolTable {
 			tableEntries = new ArrayList<TableEntry>();
 			tableEntries.add(tableEntry);
 			table.put(name, tableEntries);
-		}
-		
-		TableEntry existingTableEntry = null;
-		for (TableEntry tblEntry: tableEntries) {
-			if (tblEntry.getName().equals(name)) {
-				if((tblEntry.getUnit().getScopeLevel() < scopeFactory.getCurrentScopeElement().getUnit().getScopeLevel())||
-						(tblEntry.getUnit().equals(scopeFactory.getCurrentScopeElement().getUnit()))) {
-					existingTableEntry = tblEntry;
-					break;
+		} else {
+			TableEntry existingTableEntry = null;
+			
+			for (TableEntry tblEntry: tableEntries) {
+				if (tblEntry.getName().equals(name)) {
+					if((tblEntry.getUnit().equals(scopeFactory.getCurrentScopeElement().getUnit())) && 
+							(tblEntry.getUnit().getUnitType().equals(tableEntry.getUnit().getUnitType()))) {
+						existingTableEntry = tblEntry;
+						break;
+					}
 				}
+			}
+			
+			if (existingTableEntry != null) {
+				Unit unit = tableEntry.getUnit();
+				existingTableEntry.setUnit(unit);
+				unit.setTableEntry(existingTableEntry);
+			} else {
+				tableEntries.add(tableEntry);
 			}
 		}
 		
-		if (existingTableEntry != null) {
-			Unit unit = tableEntry.getUnit();
-			existingTableEntry.setUnit(unit);
-			unit.setTableEntry(existingTableEntry);
-		} else {
-			tableEntries.add(tableEntry);
-		}
+		
 	}
 	
 	/***
@@ -129,18 +135,52 @@ public class SymbolTable {
 		if ((tableEntries ==  null) || (tableEntries.size() == 0))
 			return null;
 		
+		if (!type.equals(UnitType.METHOD) && builtinTypes.contains(name)) {
+			if (type.equals(UnitType.CLASS)) {
+				return tableEntries.get(0).getUnit();
+			} else {
+				ClassUnit cUnit = (ClassUnit)tableEntries.get(0).getUnit();
+				VariableUnit vUnit = new VariableUnit();
+				vUnit.setModifier(cUnit.getModifier());
+				idExpr_AST idExpr = new idExpr_AST(0);
+				idExpr.typeObj = new Type(cUnit.getName(), false, 0, true);
+				vUnit.setType(idExpr);
+				return vUnit;
+			}
+		}
+		
 		TableEntry tableEntry = null;
 		for (TableEntry tblEntry: tableEntries) {
 			if (tblEntry.getName().equals(name)) {
-				if(tblEntry.getUnit().getScopeLevel() == scopeFactory.getCurrentScopeElement().getUnit().getScopeLevel()) {
-					// FOr Class declarations
-					tableEntry = tblEntry;
-					break;
+				if(!type.equals(UnitType.METHOD)) {
+					if(tblEntry.getUnit().getScopeLevel() <= 1) {
+						// FOr Class declarations
+						tableEntry = tblEntry;
+						break;
+					}
+				} else {
+					if(tblEntry.getUnit().getScopeLevel() <= 1 && type.equals(tblEntry.getUnit().getUnitType())) {
+						// FOr Class declarations
+						tableEntry = tblEntry;
+						break;
+					}
 				}
-				if((tblEntry.getUnit().getScopeLevel() < scopeFactory.getCurrentScopeElement().getUnit().getScopeLevel())||
-						(tblEntry.getUnit().equals(scopeFactory.getCurrentScopeElement().getUnit()))) {
-					tableEntry = tblEntry;
-					break;
+				
+				try{
+					if(scopeFactory.getCurrentScope().isBlock() && tblEntry.getUnit().getScopeLevel() < scopeFactory.getBlockScopeLevel()) {
+						if (type.equals(tblEntry.getUnit().getUnitType())) {
+							tableEntry = tblEntry;
+							break;
+						}
+					}else if((tblEntry.getUnit().getScopeLevel() <= (scopeFactory.getCurrentScopeElement().getUnit().getScopeLevel()+1))||
+							(tblEntry.getUnit().equals(scopeFactory.getCurrentScopeElement().getUnit()))) {
+						if (type.equals(tblEntry.getUnit().getUnitType())) {
+							tableEntry = tblEntry;
+							break;
+						}
+					}
+				} catch (Exception e) {
+					e.printStackTrace();
 				}
 			}
 		}
@@ -163,19 +203,19 @@ public class SymbolTable {
 	
 	public Unit add(String name, UnitType type) {
 		IntegerMuted currentScope = new IntegerMuted(-1);
-		
+		ScopeFactory scopeFactory = ScopeFactory.getScopeFactory();
 		Unit unit = lookUp(name, type, currentScope);
-		if (unit != null && currentScope.getValue().equals(1))
+		if (unit != null && currentScope.getValue().equals(1) && unit.getParentScopeUnit().equals(scopeFactory.getCurrentScope().getScopeUnit().getUnit()))
 			throw new RuntimeException(type.getName() + " " + name + " already declared");
 		
 		TableEntry tableEntry = new TableEntry();
 		unit = UnitFactory.generateUnit(type);
 		unit.setName(name);
-		ScopeFactory scopeFactory = ScopeFactory.getScopeFactory();
+		
 		ScopeUnit currentScopeUnit = scopeFactory.getCurrentScopeElement();
 		Unit currentUnit = currentScopeUnit.getUnit();
 		
-		currentScopeUnit.setUnit(unit);	
+		//currentScopeUnit.setUnit(unit);	
 		Unit lastNameUnit = getLastUnit(name);
 		
 		unit.setLastNameUnit(lastNameUnit);

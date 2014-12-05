@@ -15,6 +15,17 @@ public class Type {
 	
 	
 	@Override
+	public String toString() {
+		return "Type [name=" + name + ", isArray=" + isArray + ", arraySize="
+				+ arraySize + ", isClass=" + isClass + "]";
+	}
+
+
+	public Type(){
+		
+	}
+	
+	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;

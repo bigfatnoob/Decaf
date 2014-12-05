@@ -1,17 +1,24 @@
 package stage2;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
 
 
 public class TypeChecker implements DecafVisitor{
 	TypeEquality equality;
-	DecafError decafError;
+	public DecafError decafError;
 	private final static int MODE = 1;
 	private static ScopeFactory sf = ScopeFactory.getScopeFactory();
 	public static SymbolTable SYMBOL_TABLE = SymbolTable.getSymbolTable();
 	private final static List<String> basicTypes = new ArrayList<String>(Arrays.asList("int","boolean","char"));
 	private final static List<String> builtinTypes = new ArrayList<String>(Arrays.asList("Object","String","IO"));
 	
+	
+	public TypeChecker() {
+		decafError = new DecafError();
+	}
 	
 	@Override
 	public Object visit(SimpleNode node, ScopeElement data) {
@@ -24,6 +31,7 @@ public class TypeChecker implements DecafVisitor{
 	public Object visitStart_AST(start_AST node, ScopeElement data) {
 		Iterator<Unit> classes = node.getClasses().listIterator();
 		ClassUnit classUnit = null;
+		data.setKidLevel(3);
 		while (classes.hasNext()) {
 			classUnit = (ClassUnit)classes.next();
 			sf.enterNewScopeForUnit(classUnit, MODE);
@@ -154,10 +162,13 @@ public class TypeChecker implements DecafVisitor{
 	
 	
 
+	
 	@Override
 	public Object visitReturnStat(returnStat_AST node, ScopeElement data) {
 		binaryExpression_AST returnStmt = node.expr;
 		MethodUnit methodUnit = (MethodUnit) data.getScopeUnit().getUnit();
+		if (methodUnit == null)
+			return null;
 		Type methodReturnType = methodUnit.getReturnType().typeObj;
 		if (returnStmt == null && methodReturnType.name.equals("null")){
 			return null;
@@ -248,8 +259,7 @@ public class TypeChecker implements DecafVisitor{
 
 	@Override
 	public Object visitIdExpr(idExpr_AST node, ScopeElement data) {
-		node.typeObj.name = node.variableUnit.getType().jjtGetValue().toString();
-		node.typeObj.isClass = true;
+		node.typeObj = node.variableUnit.getType().typeObj;
 		return null;
 	}
 
@@ -348,7 +358,9 @@ public class TypeChecker implements DecafVisitor{
 	@Override
 	public void visitMethod(MethodUnit methodUnit, ScopeElement data) {
 		block_AST block =  methodUnit.getMethodBlock();
+		sf.enterNewScope(false, 1);
 		block.jjtAccept(this, data);
+		sf.exitLastScope(1);
 	}
 
 	@Override
@@ -583,9 +595,11 @@ public class TypeChecker implements DecafVisitor{
 	public Object visitPrimaryExisting2(primaryExisiting2_AST node, ScopeElement data) {
 		ClassUnit classUnit =(ClassUnit)node.callerScope.getScopeUnit().getUnit();
 		Unit unit;
-		if (node.arguments != null) {
-			for(binaryExpression_AST arg:node.arguments) {
-				arg.jjtAccept(this, data);
+		if (node.isMethodCall) {
+			if (node.arguments != null) {
+				for(binaryExpression_AST arg:node.arguments) {
+					arg.jjtAccept(this, data);
+				}
 			}
 			unit = classUnit.getMethod(node.attribute, node.arguments);
 			node.typeObj = ((MethodUnit)unit).getReturnType().typeObj;
@@ -678,7 +692,7 @@ public class TypeChecker implements DecafVisitor{
 		methodParent_AST mParent = node.mParent;
 		methodPrime_AST mPrime = node.mPrime;
 		List<binaryExpression_AST> actualArgs = node.actualArgs;
-		mParent.jjtAccept(this, data);
+		//mParent.jjtAccept(this, data);
 		if (actualArgs != null) {
 			for(binaryExpression_AST arg: actualArgs) {
 				arg.jjtAccept(this, data);
@@ -698,7 +712,7 @@ public class TypeChecker implements DecafVisitor{
 			mParent.isMethod = true;
 			mParent.actualArgs = actualArgs;
 			mParent.jjtAccept(this, data);
-			node.typeObj = mPrime.typeObj;
+			node.typeObj = mParent.typeObj;
 		} 
 		return null;
 	}
@@ -805,6 +819,11 @@ public class TypeChecker implements DecafVisitor{
 				if (vUnit != null){
 					node.typeObj = vUnit.getType().typeObj;
 				} else {
+					// Static variables come here
+					ClassUnit cUnit = (ClassUnit)getClassScope(name).getScopeUnit().getUnit();
+					if (cUnit!= null){
+						node.typeObj = new Type(name, false, 0, true);
+					}
 					// TODO handle error
 				}
 			}
@@ -933,7 +952,21 @@ public class TypeChecker implements DecafVisitor{
 				}
 			}
 		} else {
-			
+			IntegerMuted intBaseMuted = new IntegerMuted(-1);
+			vUnit = (VariableUnit) SYMBOL_TABLE.lookUp(name, UnitType.VARIABLE, intBaseMuted);
+			node.typeObj = vUnit.getType().typeObj;
+			if ((arrayIndices == null) && (!node.typeObj.isArray)) {
+				// Variable
+			} else if (arrayIndices!=null && (arrayIndices.size() == node.typeObj.arraySize)) {
+				// Variable in array
+				node.typeObj.isArray = false;
+			} else if (arrayIndices!=null && (arrayIndices.size() < node.typeObj.arraySize)) {
+				// array
+				node.typeObj.arraySize = node.typeObj.arraySize - arrayIndices.size();
+				node.typeObj.isArray = true;
+			} else {
+				// TODO error handle
+			}
 		}
 		return null;
 	}

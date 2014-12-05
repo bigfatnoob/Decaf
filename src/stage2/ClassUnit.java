@@ -86,7 +86,7 @@ public class ClassUnit extends Unit {
 				boolean validMethod = true;
 				for (int i=0; i<formalArgSize; i++){
 					VariableUnit formalArg = (VariableUnit)formalArgs.get(i);
-					if (! formalArg.getType().jjtGetValue().toString().equals(actualArgs.get(i).type)) {
+					if (! formalArg.getType().jjtGetValue().toString().equals(actualArgs.get(i).typeObj.name)) {
 						validMethod = false;
 						break;
 					}

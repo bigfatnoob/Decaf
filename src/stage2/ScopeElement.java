@@ -17,6 +17,8 @@ public class ScopeElement {
 	private boolean isBlock;
 	private boolean isProgram;
 	private IntegerMuted kidLevel = new IntegerMuted();
+	boolean doNotExit = false;
+	
 	
 	public ScopeElement(){
 		kids = new ArrayList<ScopeElement>();
