@@ -19,5 +19,8 @@ class intExpr_AST extends literal_AST {
   public Object jjtAccept(DecafVisitor visitor, ScopeElement data) {
     return visitor.visitIntExpr(this, data);
   }
+  public void cAccept(CodeGenerator codeGenerator, ScopeElement data) {
+	  codeGenerator.visitIntExpr(this, data);
+  }
 }
 /* JavaCC - OriginalChecksum=b668919a5949467e48ed688d7e8bae32 (do not edit this line) */

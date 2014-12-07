@@ -14,6 +14,7 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
   {
     Decaf parser;
     DecafVisitor visitor = new TypeChecker();
+    CodeGenerator codeGen = new CodeGenerator();
     ScopeFactory sf = ScopeFactory.getScopeFactory();
     if (args.length == 1) {
       try {
@@ -61,8 +62,14 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
       *TypeChecking
       */
       SYMBOL_TABLE.enterScope(true, 1);
-
       visitor.visitStart_AST(start,sf.getCurrentScope());
+      SYMBOL_TABLE.exitScope(1);
+      sf.getCurrentScope().setKidLevel(0);
+          /**
+	  *Code Generation
+	  */
+      SYMBOL_TABLE.enterScope(true, 1);
+      codeGen.visitStart(start, sf.getCurrentScope());
       SYMBOL_TABLE.exitScope(1);
       //start.dump(" -> ");
     }
@@ -160,14 +167,15 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
         } else {
             IntegerMuted intBaseMuted = new IntegerMuted(-1);
                     classUnit = (ClassUnit) SYMBOL_TABLE.lookUp(className, UnitType.CLASS, intBaseMuted);
-                    if (superClassName != null) {
-                      IntegerMuted intMuted = new IntegerMuted(-1);
-                      superClassUnit = (ClassUnit)SYMBOL_TABLE.lookUp(superClassName, UnitType.CLASS, intMuted);
-                      if (superClassUnit == null){
-                        {if (true) throw new ParseException("Super class " + superClassName + " has not been declared.");}
-                      }
-                      classUnit.setSuperClass(superClassUnit);
+                    if (superClassName == null) {
+                      superClassName = "Object";
                     }
+                    IntegerMuted intMuted = new IntegerMuted(-1);
+                superClassUnit = (ClassUnit)SYMBOL_TABLE.lookUp(superClassName, UnitType.CLASS, intMuted);
+                if (superClassUnit == null){
+                        {if (true) throw new ParseException("Super class " + superClassName + " has not been declared.");}
+                }
+                classUnit.setSuperClass(superClassUnit);
         }
     jj_consume_token(LCB);
      SYMBOL_TABLE.enterScopeForUnit(classUnit,MODE);
@@ -189,7 +197,7 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
         jj_la1[2] = jj_gen;
         break label_2;
       }
-      classFields = Member();
+      classFields = Member(classUnit);
         /*
         for (Unit memberUnit: classFields) {
           for (Unit existingUnit : classFieldsCollection) {
@@ -209,18 +217,18 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
     throw new Error("Missing return statement in function");
   }
 
-  final public List<Unit> Member() throws ParseException {
+  final public List<Unit> Member(ClassUnit classUnit) throws ParseException {
   Unit member = null;
   List<Unit> memberList = null;
   List<Unit> allMembers = new ArrayList<Unit>();
     if (jj_2_1(10)) {
-      memberList = Field();
-                       allMembers.addAll(memberList); {if (true) return allMembers;}
+      memberList = Field(classUnit);
+                                allMembers.addAll(memberList); {if (true) return allMembers;}
     } else if (jj_2_2(10)) {
-      member = Method();
-                    allMembers.add(member); {if (true) return allMembers;}
+      member = Method(classUnit);
+                             allMembers.add(member); {if (true) return allMembers;}
     } else if (jj_2_3(10)) {
-      member = Ctor();
+      member = Ctor(classUnit);
     MethodUnit cMember = (MethodUnit)member;
     cMember.setConstructor(true);
     allMembers.add(cMember); {if (true) return allMembers;}
@@ -231,7 +239,7 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
     throw new Error("Missing return statement in function");
   }
 
-  final public List<Unit> Field() throws ParseException {
+  final public List<Unit> Field(ClassUnit classUnit) throws ParseException {
   FieldDetails fieldDetails = new FieldDetails();
   Modifier modifier = null;
   List<Unit> fieldList = null;
@@ -240,6 +248,7 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
     fieldList = FieldDeclarations(fieldDetails);
     for(Unit fieldUnit: fieldList){
       VariableUnit vUnit = (VariableUnit) fieldUnit;
+      vUnit.classUnit = classUnit;
       vUnit.setLocalVariable(true);
     }
     {if (true) return fieldList;}
@@ -478,6 +487,7 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
   final public Unit Variable(FieldDetails fieldDetails) throws ParseException {
   VariableUnit variable;
   String variableName = null;
+  binaryExpression_AST expr = null;
     variableName = ID();
     if (MODE == 0) {
             variable = (VariableUnit)SYMBOL_TABLE.add(variableName, UnitType.VARIABLE);
@@ -501,17 +511,8 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
     }
     switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
     case ASSIGN:
-     assignOperator_AST jjtn001 = new assignOperator_AST(JJTASSIGNOPERATOR_AST);
-     boolean jjtc001 = true;
-     jjtree.openNodeScope(jjtn001);
-      try {
-        jj_consume_token(ASSIGN);
-      } finally {
-     if (jjtc001) {
-       jjtree.closeNodeScope(jjtn001, true);
-     }
-      }
-      Expression();
+      jj_consume_token(ASSIGN);
+      expr = Expression();
       break;
     default:
       jj_la1[11] = jj_gen;
@@ -522,12 +523,13 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
             variable.setModifier(fieldDetails.getModifier());
             variable.setArray(fieldDetails.isArray);
             variable.setArraySize(fieldDetails.arraySize);
+            variable.rhs = expr;
     }
     {if (true) return variable;}
     throw new Error("Missing return statement in function");
   }
 
-  final public Unit Method() throws ParseException {
+  final public Unit Method(ClassUnit classUnit) throws ParseException {
   MethodUnit methodUnit = new MethodUnit();
   Modifier modifier = null;
   SimpleNode type = null;
@@ -586,6 +588,7 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
    methodUnit.setModifier(modifier);
    methodUnit.setName(functionName);
    methodUnit.setReturnType(type);
+   methodUnit.classUnit = classUnit;
     jj_consume_token(LP);
     SYMBOL_TABLE.enterScopeForUnit(methodUnit, MODE);
     switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
@@ -603,14 +606,14 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
       ;
     }
     jj_consume_token(RP);
-    SYMBOL_TABLE.exitScope(MODE);
     block = Block();
+    SYMBOL_TABLE.exitScope(MODE);
     methodUnit.setMethodBlock((block_AST)block);
    {if (true) return methodUnit;}
     throw new Error("Missing return statement in function");
   }
 
-  final public Unit Ctor() throws ParseException {
+  final public Unit Ctor(ClassUnit classUnit) throws ParseException {
   MethodUnit methodUnit = new MethodUnit();
   Modifier modifier = null;
   List<Unit> formalArgs = null;
@@ -619,7 +622,6 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
   SimpleNode type = null;
   block_AST block = null;
     modifier = Modifier();
-                        methodUnit.setModifier(modifier);
     functionName = ID();
     id_AST jjtn001 = new id_AST(JJTID_AST);
     boolean jjtc001 = true;
@@ -645,6 +647,8 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
     type.typeObj.name = functionName;
     type.typeObj.isClass = true;
     methodUnit.setReturnType(type);
+    methodUnit.classUnit = classUnit;
+    methodUnit.setModifier(modifier);
     SYMBOL_TABLE.enterScopeForUnit(methodUnit,MODE);
     switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
     case BOOLEAN:
@@ -661,8 +665,8 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
       ;
     }
     jj_consume_token(RP);
-    SYMBOL_TABLE.exitScope(MODE);
     block = Block();
+    SYMBOL_TABLE.exitScope(MODE);
     methodUnit.setMethodBlock((block_AST)block);
    {if (true) return methodUnit;}
     throw new Error("Missing return statement in function");
@@ -975,6 +979,10 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
             variables = FieldDeclarations(new FieldDetails());
                                                                      jjtree.closeNodeScope(jjtn005, true);
                                                                      jjtc005 = false;
+    if (MODE == 0)
+    {
+        SYMBOL_TABLE.addVariablesToMethod(variables);
+    }
     jjtn005.variables = variables;
     {if (true) return jjtn005;}
           } catch (Throwable jjte005) {
@@ -3468,93 +3476,9 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
     finally { jj_save(46, xla); }
   }
 
-  private boolean jj_3_19() {
-    if (jj_scan_token(THIS)) return true;
-    return false;
-  }
-
-  private boolean jj_3_46() {
-    if (jj_scan_token(ID)) return true;
-    if (jj_scan_token(LP)) return true;
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3R_43()) jj_scanpos = xsp;
-    if (jj_scan_token(RP)) return true;
-    return false;
-  }
-
-  private boolean jj_3_18() {
-    if (jj_3R_36()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_33() {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3_18()) {
-    jj_scanpos = xsp;
-    if (jj_3_19()) {
-    jj_scanpos = xsp;
-    if (jj_3_20()) {
-    jj_scanpos = xsp;
-    if (jj_3_21()) {
-    jj_scanpos = xsp;
-    if (jj_3_22()) return true;
-    }
-    }
-    }
-    }
-    return false;
-  }
-
   private boolean jj_3R_54() {
     if (jj_scan_token(LSB)) return true;
     if (jj_scan_token(RSB)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_24() {
-    if (jj_scan_token(PUBLIC)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_29() {
-    if (jj_3R_53()) return true;
-    Token xsp;
-    while (true) {
-      xsp = jj_scanpos;
-      if (jj_3R_54()) { jj_scanpos = xsp; break; }
-    }
-    if (jj_3R_55()) return true;
-    if (jj_scan_token(SCOLON)) return true;
-    return false;
-  }
-
-  private boolean jj_3_45() {
-    if (jj_scan_token(NEW)) return true;
-    if (jj_scan_token(ID)) return true;
-    if (jj_scan_token(LP)) return true;
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3R_106()) jj_scanpos = xsp;
-    if (jj_scan_token(RP)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_18() {
-    if (jj_scan_token(PUBLIC)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_104() {
-    if (jj_scan_token(ID)) return true;
-    return false;
-  }
-
-  private boolean jj_3_44() {
-    if (jj_scan_token(LP)) return true;
-    if (jj_3R_27()) return true;
-    if (jj_scan_token(RP)) return true;
     return false;
   }
 
@@ -3573,6 +3497,11 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
     return false;
   }
 
+  private boolean jj_3R_24() {
+    if (jj_scan_token(PUBLIC)) return true;
+    return false;
+  }
+
   private boolean jj_3_17() {
     if (jj_scan_token(ID)) return true;
     Token xsp;
@@ -3584,21 +3513,20 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
     return false;
   }
 
-  private boolean jj_3_7() {
-    if (jj_scan_token(STATIC)) return true;
+  private boolean jj_3R_29() {
+    if (jj_3R_53()) return true;
+    Token xsp;
+    while (true) {
+      xsp = jj_scanpos;
+      if (jj_3R_54()) { jj_scanpos = xsp; break; }
+    }
+    if (jj_3R_55()) return true;
+    if (jj_scan_token(SCOLON)) return true;
     return false;
   }
 
-  private boolean jj_3_6() {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3R_24()) {
-    jj_scanpos = xsp;
-    if (jj_3R_25()) {
-    jj_scanpos = xsp;
-    if (jj_3R_26()) return true;
-    }
-    }
+  private boolean jj_3R_18() {
+    if (jj_scan_token(PUBLIC)) return true;
     return false;
   }
 
@@ -3609,59 +3537,8 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
     return false;
   }
 
-  private boolean jj_3_5() {
-    if (jj_scan_token(STATIC)) return true;
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3R_21()) {
-    jj_scanpos = xsp;
-    if (jj_3R_22()) {
-    jj_scanpos = xsp;
-    if (jj_3R_23()) return true;
-    }
-    }
-    return false;
-  }
-
   private boolean jj_3_42() {
     if (jj_scan_token(THIS)) return true;
-    return false;
-  }
-
-  private boolean jj_3_4() {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3R_18()) {
-    jj_scanpos = xsp;
-    if (jj_3R_19()) {
-    jj_scanpos = xsp;
-    if (jj_3R_20()) return true;
-    }
-    }
-    if (jj_scan_token(STATIC)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_72() {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3_4()) {
-    jj_scanpos = xsp;
-    if (jj_3_5()) {
-    jj_scanpos = xsp;
-    if (jj_3_6()) {
-    jj_scanpos = xsp;
-    if (jj_3_7()) return true;
-    }
-    }
-    }
-    return false;
-  }
-
-  private boolean jj_3R_45() {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3R_72()) jj_scanpos = xsp;
     return false;
   }
 
@@ -3727,9 +3604,72 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
     return false;
   }
 
-  private boolean jj_3R_15() {
-    if (jj_3R_45()) return true;
-    if (jj_3R_29()) return true;
+  private boolean jj_3_7() {
+    if (jj_scan_token(STATIC)) return true;
+    return false;
+  }
+
+  private boolean jj_3_6() {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3R_24()) {
+    jj_scanpos = xsp;
+    if (jj_3R_25()) {
+    jj_scanpos = xsp;
+    if (jj_3R_26()) return true;
+    }
+    }
+    return false;
+  }
+
+  private boolean jj_3_5() {
+    if (jj_scan_token(STATIC)) return true;
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3R_21()) {
+    jj_scanpos = xsp;
+    if (jj_3R_22()) {
+    jj_scanpos = xsp;
+    if (jj_3R_23()) return true;
+    }
+    }
+    return false;
+  }
+
+  private boolean jj_3_4() {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3R_18()) {
+    jj_scanpos = xsp;
+    if (jj_3R_19()) {
+    jj_scanpos = xsp;
+    if (jj_3R_20()) return true;
+    }
+    }
+    if (jj_scan_token(STATIC)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_72() {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3_4()) {
+    jj_scanpos = xsp;
+    if (jj_3_5()) {
+    jj_scanpos = xsp;
+    if (jj_3_6()) {
+    jj_scanpos = xsp;
+    if (jj_3_7()) return true;
+    }
+    }
+    }
+    return false;
+  }
+
+  private boolean jj_3R_45() {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3R_72()) jj_scanpos = xsp;
     return false;
   }
 
@@ -3749,8 +3689,9 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
     return false;
   }
 
-  private boolean jj_3_3() {
-    if (jj_3R_17()) return true;
+  private boolean jj_3R_15() {
+    if (jj_3R_45()) return true;
+    if (jj_3R_29()) return true;
     return false;
   }
 
@@ -3759,20 +3700,10 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
     return false;
   }
 
-  private boolean jj_3_2() {
-    if (jj_3R_16()) return true;
-    return false;
-  }
-
   private boolean jj_3R_32() {
     if (jj_3R_59()) return true;
     if (jj_scan_token(ASSIGN)) return true;
     if (jj_3R_27()) return true;
-    return false;
-  }
-
-  private boolean jj_3_1() {
-    if (jj_3R_15()) return true;
     return false;
   }
 
@@ -3797,8 +3728,23 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
     return false;
   }
 
+  private boolean jj_3_3() {
+    if (jj_3R_17()) return true;
+    return false;
+  }
+
+  private boolean jj_3_2() {
+    if (jj_3R_16()) return true;
+    return false;
+  }
+
   private boolean jj_3_14() {
     if (jj_3R_27()) return true;
+    return false;
+  }
+
+  private boolean jj_3_1() {
+    if (jj_3R_15()) return true;
     return false;
   }
 
@@ -3843,11 +3789,6 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
     return false;
   }
 
-  private boolean jj_3R_124() {
-    if (jj_scan_token(ELSE)) return true;
-    return false;
-  }
-
   private boolean jj_3R_137() {
     Token xsp;
     xsp = jj_scanpos;
@@ -3869,6 +3810,11 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
     jj_scanpos = xsp;
     if (jj_3R_138()) return true;
     }
+    return false;
+  }
+
+  private boolean jj_3R_124() {
+    if (jj_scan_token(ELSE)) return true;
     return false;
   }
 
@@ -4034,6 +3980,16 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
     return false;
   }
 
+  private boolean jj_3R_105() {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3R_120()) {
+    jj_scanpos = xsp;
+    if (jj_3R_121()) return true;
+    }
+    return false;
+  }
+
   private boolean jj_3_9() {
     if (jj_3R_28()) return true;
     if (jj_scan_token(SCOLON)) return true;
@@ -4046,25 +4002,6 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
     xsp = jj_scanpos;
     if (jj_3R_111()) jj_scanpos = xsp;
     if (jj_scan_token(SCOLON)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_105() {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3R_120()) {
-    jj_scanpos = xsp;
-    if (jj_3R_121()) return true;
-    }
-    return false;
-  }
-
-  private boolean jj_3R_97() {
-    if (jj_scan_token(WHILE)) return true;
-    if (jj_scan_token(LP)) return true;
-    if (jj_3R_27()) return true;
-    if (jj_scan_token(RP)) return true;
-    if (jj_3R_81()) return true;
     return false;
   }
 
@@ -4086,6 +4023,15 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
     return false;
   }
 
+  private boolean jj_3R_97() {
+    if (jj_scan_token(WHILE)) return true;
+    if (jj_scan_token(LP)) return true;
+    if (jj_3R_27()) return true;
+    if (jj_scan_token(RP)) return true;
+    if (jj_3R_81()) return true;
+    return false;
+  }
+
   private boolean jj_3R_87() {
     if (jj_scan_token(AND)) return true;
     if (jj_3R_52()) return true;
@@ -4097,11 +4043,6 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
     Token xsp;
     xsp = jj_scanpos;
     if (jj_3R_119()) jj_scanpos = xsp;
-    return false;
-  }
-
-  private boolean jj_3R_49() {
-    if (jj_scan_token(ID)) return true;
     return false;
   }
 
@@ -4148,14 +4089,14 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
     return false;
   }
 
-  private boolean jj_3R_121() {
-    if (jj_scan_token(NOTEQUAL)) return true;
-    if (jj_3R_74()) return true;
+  private boolean jj_3R_49() {
+    if (jj_scan_token(ID)) return true;
     return false;
   }
 
-  private boolean jj_3R_56() {
-    if (jj_3R_81()) return true;
+  private boolean jj_3R_121() {
+    if (jj_scan_token(NOTEQUAL)) return true;
+    if (jj_3R_74()) return true;
     return false;
   }
 
@@ -4164,6 +4105,11 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
     Token xsp;
     xsp = jj_scanpos;
     if (jj_3R_105()) jj_scanpos = xsp;
+    return false;
+  }
+
+  private boolean jj_3R_56() {
+    if (jj_3R_81()) return true;
     return false;
   }
 
@@ -4256,11 +4202,6 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
     return false;
   }
 
-  private boolean jj_3R_51() {
-    if (jj_3R_73()) return true;
-    return false;
-  }
-
   private boolean jj_3R_68() {
     if (jj_scan_token(DOT)) return true;
     if (jj_scan_token(ID)) return true;
@@ -4273,6 +4214,11 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
     if (jj_scan_token(LSB)) return true;
     if (jj_3R_27()) return true;
     if (jj_scan_token(RSB)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_51() {
+    if (jj_3R_73()) return true;
     return false;
   }
 
@@ -4314,6 +4260,11 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
     return false;
   }
 
+  private boolean jj_3R_117() {
+    if (jj_3R_67()) return true;
+    return false;
+  }
+
   private boolean jj_3R_17() {
     if (jj_3R_45()) return true;
     if (jj_3R_49()) return true;
@@ -4323,11 +4274,6 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
     if (jj_3R_51()) jj_scanpos = xsp;
     if (jj_scan_token(RP)) return true;
     if (jj_3R_30()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_117() {
-    if (jj_3R_67()) return true;
     return false;
   }
 
@@ -4376,11 +4322,6 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
     return false;
   }
 
-  private boolean jj_3R_23() {
-    if (jj_scan_token(PROTECTED)) return true;
-    return false;
-  }
-
   private boolean jj_3_32() {
     if (jj_scan_token(THIS)) return true;
     return false;
@@ -4388,11 +4329,6 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
 
   private boolean jj_3R_116() {
     if (jj_3R_67()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_50() {
-    if (jj_3R_73()) return true;
     return false;
   }
 
@@ -4420,15 +4356,25 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
     return false;
   }
 
-  private boolean jj_3R_47() {
-    if (jj_scan_token(VOID)) return true;
-    return false;
-  }
-
   private boolean jj_3R_71() {
     if (jj_scan_token(LSB)) return true;
     if (jj_3R_27()) return true;
     if (jj_scan_token(RSB)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_23() {
+    if (jj_scan_token(PROTECTED)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_50() {
+    if (jj_3R_73()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_47() {
+    if (jj_scan_token(VOID)) return true;
     return false;
   }
 
@@ -4447,17 +4393,6 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
     Token xsp;
     xsp = jj_scanpos;
     if (jj_3R_114()) jj_scanpos = xsp;
-    return false;
-  }
-
-  private boolean jj_3R_46() {
-    if (jj_3R_53()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_48() {
-    if (jj_scan_token(LSB)) return true;
-    if (jj_scan_token(RSB)) return true;
     return false;
   }
 
@@ -4491,27 +4426,6 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
     return false;
   }
 
-  private boolean jj_3R_16() {
-    if (jj_3R_45()) return true;
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3R_46()) {
-    jj_scanpos = xsp;
-    if (jj_3R_47()) return true;
-    }
-    while (true) {
-      xsp = jj_scanpos;
-      if (jj_3R_48()) { jj_scanpos = xsp; break; }
-    }
-    if (jj_3R_49()) return true;
-    if (jj_scan_token(LP)) return true;
-    xsp = jj_scanpos;
-    if (jj_3R_50()) jj_scanpos = xsp;
-    if (jj_scan_token(RP)) return true;
-    if (jj_3R_30()) return true;
-    return false;
-  }
-
   private boolean jj_3R_122() {
     if (jj_scan_token(LP)) return true;
     Token xsp;
@@ -4531,6 +4445,17 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
     return false;
   }
 
+  private boolean jj_3R_46() {
+    if (jj_3R_53()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_48() {
+    if (jj_scan_token(LSB)) return true;
+    if (jj_scan_token(RSB)) return true;
+    return false;
+  }
+
   private boolean jj_3R_42() {
     if (jj_scan_token(NEW)) return true;
     if (jj_3R_53()) return true;
@@ -4540,6 +4465,27 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
       xsp = jj_scanpos;
       if (jj_3R_71()) { jj_scanpos = xsp; break; }
     }
+    return false;
+  }
+
+  private boolean jj_3R_16() {
+    if (jj_3R_45()) return true;
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3R_46()) {
+    jj_scanpos = xsp;
+    if (jj_3R_47()) return true;
+    }
+    while (true) {
+      xsp = jj_scanpos;
+      if (jj_3R_48()) { jj_scanpos = xsp; break; }
+    }
+    if (jj_3R_49()) return true;
+    if (jj_scan_token(LP)) return true;
+    xsp = jj_scanpos;
+    if (jj_3R_50()) jj_scanpos = xsp;
+    if (jj_scan_token(RP)) return true;
+    if (jj_3R_30()) return true;
     return false;
   }
 
@@ -4565,11 +4511,6 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
     return false;
   }
 
-  private boolean jj_3R_26() {
-    if (jj_scan_token(PROTECTED)) return true;
-    return false;
-  }
-
   private boolean jj_3_28() {
     if (jj_scan_token(DOT)) return true;
     if (jj_scan_token(ID)) return true;
@@ -4581,16 +4522,6 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
     xsp = jj_scanpos;
     if (jj_3R_117()) jj_scanpos = xsp;
     if (jj_scan_token(RP)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_22() {
-    if (jj_scan_token(PRIVATE)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_20() {
-    if (jj_scan_token(PROTECTED)) return true;
     return false;
   }
 
@@ -4633,12 +4564,6 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
     return false;
   }
 
-  private boolean jj_3R_96() {
-    if (jj_scan_token(ASSIGN)) return true;
-    if (jj_3R_27()) return true;
-    return false;
-  }
-
   private boolean jj_3_24() {
     if (jj_scan_token(DOT)) return true;
     if (jj_scan_token(ID)) return true;
@@ -4653,12 +4578,6 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
     return false;
   }
 
-  private boolean jj_3R_95() {
-    if (jj_scan_token(LSB)) return true;
-    if (jj_scan_token(RSB)) return true;
-    return false;
-  }
-
   private boolean jj_3_23() {
     if (jj_scan_token(DOT)) return true;
     if (jj_scan_token(ID)) return true;
@@ -4668,6 +4587,11 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
     if (jj_3R_37()) jj_scanpos = xsp;
     if (jj_scan_token(RP)) return true;
     if (jj_3R_38()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_26() {
+    if (jj_scan_token(PROTECTED)) return true;
     return false;
   }
 
@@ -4699,6 +4623,16 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
     return false;
   }
 
+  private boolean jj_3R_22() {
+    if (jj_scan_token(PRIVATE)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_20() {
+    if (jj_scan_token(PROTECTED)) return true;
+    return false;
+  }
+
   private boolean jj_3R_123() {
     if (jj_scan_token(LSB)) return true;
     if (jj_3R_27()) return true;
@@ -4706,15 +4640,15 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
     return false;
   }
 
-  private boolean jj_3R_79() {
-    if (jj_3R_49()) return true;
-    Token xsp;
-    while (true) {
-      xsp = jj_scanpos;
-      if (jj_3R_95()) { jj_scanpos = xsp; break; }
-    }
-    xsp = jj_scanpos;
-    if (jj_3R_96()) jj_scanpos = xsp;
+  private boolean jj_3R_96() {
+    if (jj_scan_token(ASSIGN)) return true;
+    if (jj_3R_27()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_95() {
+    if (jj_scan_token(LSB)) return true;
+    if (jj_scan_token(RSB)) return true;
     return false;
   }
 
@@ -4734,19 +4668,15 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
     return false;
   }
 
-  private boolean jj_3R_80() {
-    if (jj_scan_token(COMMA)) return true;
-    if (jj_3R_79()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_55() {
-    if (jj_3R_79()) return true;
+  private boolean jj_3R_79() {
+    if (jj_3R_49()) return true;
     Token xsp;
     while (true) {
       xsp = jj_scanpos;
-      if (jj_3R_80()) { jj_scanpos = xsp; break; }
+      if (jj_3R_95()) { jj_scanpos = xsp; break; }
     }
+    xsp = jj_scanpos;
+    if (jj_3R_96()) jj_scanpos = xsp;
     return false;
   }
 
@@ -4774,6 +4704,22 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
     return false;
   }
 
+  private boolean jj_3R_80() {
+    if (jj_scan_token(COMMA)) return true;
+    if (jj_3R_79()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_55() {
+    if (jj_3R_79()) return true;
+    Token xsp;
+    while (true) {
+      xsp = jj_scanpos;
+      if (jj_3R_80()) { jj_scanpos = xsp; break; }
+    }
+    return false;
+  }
+
   private boolean jj_3R_90() {
     if (jj_scan_token(ID)) return true;
     return false;
@@ -4787,6 +4733,13 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
     return false;
   }
 
+  private boolean jj_3R_44() {
+    if (jj_scan_token(LSB)) return true;
+    if (jj_3R_27()) return true;
+    if (jj_scan_token(RSB)) return true;
+    return false;
+  }
+
   private boolean jj_3R_25() {
     if (jj_scan_token(PRIVATE)) return true;
     return false;
@@ -4797,30 +4750,13 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
     return false;
   }
 
-  private boolean jj_3R_19() {
-    if (jj_scan_token(PRIVATE)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_44() {
-    if (jj_scan_token(LSB)) return true;
-    if (jj_3R_27()) return true;
-    if (jj_scan_token(RSB)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_78() {
-    if (jj_scan_token(ID)) return true;
-    return false;
-  }
-
   private boolean jj_3R_43() {
     if (jj_3R_67()) return true;
     return false;
   }
 
-  private boolean jj_3R_77() {
-    if (jj_scan_token(BOOLEAN)) return true;
+  private boolean jj_3R_19() {
+    if (jj_scan_token(PRIVATE)) return true;
     return false;
   }
 
@@ -4835,8 +4771,8 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
     return false;
   }
 
-  private boolean jj_3R_76() {
-    if (jj_scan_token(CHAR)) return true;
+  private boolean jj_3R_78() {
+    if (jj_scan_token(ID)) return true;
     return false;
   }
 
@@ -4863,6 +4799,67 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
     return false;
   }
 
+  private boolean jj_3R_77() {
+    if (jj_scan_token(BOOLEAN)) return true;
+    return false;
+  }
+
+  private boolean jj_3_20() {
+    if (jj_scan_token(SUPER)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_35() {
+    if (jj_scan_token(LSB)) return true;
+    if (jj_3R_27()) return true;
+    if (jj_scan_token(RSB)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_76() {
+    if (jj_scan_token(CHAR)) return true;
+    return false;
+  }
+
+  private boolean jj_3_19() {
+    if (jj_scan_token(THIS)) return true;
+    return false;
+  }
+
+  private boolean jj_3_46() {
+    if (jj_scan_token(ID)) return true;
+    if (jj_scan_token(LP)) return true;
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3R_43()) jj_scanpos = xsp;
+    if (jj_scan_token(RP)) return true;
+    return false;
+  }
+
+  private boolean jj_3_18() {
+    if (jj_3R_36()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_33() {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3_18()) {
+    jj_scanpos = xsp;
+    if (jj_3_19()) {
+    jj_scanpos = xsp;
+    if (jj_3_20()) {
+    jj_scanpos = xsp;
+    if (jj_3_21()) {
+    jj_scanpos = xsp;
+    if (jj_3_22()) return true;
+    }
+    }
+    }
+    }
+    return false;
+  }
+
   private boolean jj_3R_75() {
     if (jj_scan_token(INT)) return true;
     return false;
@@ -4884,15 +4881,26 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants, DecafConstants
     return false;
   }
 
-  private boolean jj_3_20() {
-    if (jj_scan_token(SUPER)) return true;
+  private boolean jj_3_45() {
+    if (jj_scan_token(NEW)) return true;
+    if (jj_scan_token(ID)) return true;
+    if (jj_scan_token(LP)) return true;
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3R_106()) jj_scanpos = xsp;
+    if (jj_scan_token(RP)) return true;
     return false;
   }
 
-  private boolean jj_3R_35() {
-    if (jj_scan_token(LSB)) return true;
+  private boolean jj_3R_104() {
+    if (jj_scan_token(ID)) return true;
+    return false;
+  }
+
+  private boolean jj_3_44() {
+    if (jj_scan_token(LP)) return true;
     if (jj_3R_27()) return true;
-    if (jj_scan_token(RSB)) return true;
+    if (jj_scan_token(RP)) return true;
     return false;
   }
 

@@ -21,5 +21,11 @@ class sum_AST extends SimpleNode {
   public Object jjtAccept(DecafVisitor visitor, ScopeElement data) {
     return visitor.visitSum(this, data);
   }
+
+public void cAccept(CodeGenerator codeGenerator, ScopeElement data,
+		String falsLab) {
+	codeGenerator.visitSum(this, data, falsLab);
+	
+}
 }
 /* JavaCC - OriginalChecksum=406ce59e43eee5d88c23ddaa96776c01 (do not edit this line) */

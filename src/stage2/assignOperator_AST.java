@@ -19,5 +19,10 @@ class assignOperator_AST extends SimpleNode {
   public Object jjtAccept(DecafVisitor visitor, ScopeElement data) {
     return visitor.visitAssignOperator(this, data);
   }
+
+	public void cAccept(CodeGenerator codeGenerator, ScopeElement data,
+			String nextLbl) {
+		codeGenerator.visitAssignOperator(this, data, nextLbl);
+	}
 }
 /* JavaCC - OriginalChecksum=115f247d0553c562c34142e3a5fd2416 (do not edit this line) */

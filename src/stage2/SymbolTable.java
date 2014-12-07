@@ -167,7 +167,7 @@ public class SymbolTable {
 				}
 				
 				try{
-					if(scopeFactory.getCurrentScope().isBlock() && tblEntry.getUnit().getScopeLevel() < scopeFactory.getBlockScopeLevel()) {
+					if(scopeFactory.getCurrentScope().isBlock() && tblEntry.getUnit().getScopeLevel() <= (scopeFactory.getBlockScopeLevel()+1)) {
 						if (type.equals(tblEntry.getUnit().getUnitType())) {
 							tableEntry = tblEntry;
 							break;
@@ -178,6 +178,9 @@ public class SymbolTable {
 							tableEntry = tblEntry;
 							break;
 						}
+					} else if (type.equals(tblEntry.getUnit().getUnitType()) && (tableEntries.size() == 1)){
+						tableEntry = tblEntry;
+						break;
 					}
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -205,7 +208,7 @@ public class SymbolTable {
 		IntegerMuted currentScope = new IntegerMuted(-1);
 		ScopeFactory scopeFactory = ScopeFactory.getScopeFactory();
 		Unit unit = lookUp(name, type, currentScope);
-		if (unit != null && currentScope.getValue().equals(1) && unit.getParentScopeUnit().equals(scopeFactory.getCurrentScope().getScopeUnit().getUnit()))
+		if (unit != null && currentScope.getValue().equals(1) && (unit.getParentScopeUnit()!=null) && unit.getParentScopeUnit().equals(scopeFactory.getCurrentScope().getScopeUnit().getUnit()))
 			throw new RuntimeException(type.getName() + " " + name + " already declared");
 		
 		TableEntry tableEntry = new TableEntry();
@@ -240,7 +243,7 @@ public class SymbolTable {
 	public void exitScope(int MODE) {
 		ScopeFactory scopeFactory = ScopeFactory.getScopeFactory();
 		ScopeUnit scopeUnit = scopeFactory.exitLastScope(MODE);
-		Unit lastUnit = scopeUnit.getUnit();
+		//Unit lastUnit = scopeUnit.getUnit();
 		
 		/*while (lastUnit != null) {
 			resetTableEntries(lastUnit);
@@ -251,5 +254,18 @@ public class SymbolTable {
 	public void enterScopeForUnit(Unit unit, int MODE) {
 		ScopeFactory scopeFactory = ScopeFactory.getScopeFactory();
 		scopeFactory.enterNewScopeForUnit(unit, MODE);
+	}
+	
+	public void addVariablesToMethod(List<Unit> variables) {
+		ScopeFactory scopeFactory = ScopeFactory.getScopeFactory();
+		ScopeElement scopeElement = scopeFactory.getCurrentScope();
+		ScopeElement thisScope = scopeElement;
+		while (thisScope.isBlock()) {
+			thisScope = thisScope.getParent();
+		}
+		if (thisScope.getScopeUnit().getUnit() != null && thisScope.getScopeUnit().getUnit() instanceof MethodUnit) {
+			MethodUnit methodUnit = (MethodUnit)thisScope.getScopeUnit().getUnit();
+			methodUnit.localVariables.addAll(variables);
+		}
 	}
 }

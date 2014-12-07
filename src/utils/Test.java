@@ -21,7 +21,7 @@ public class Test {
 			System.out.println();
 		}*/
 		String[] mainArgs = new String[1];
-		mainArgs[0] = FOLDER_PATH+"cars.decaf";
+		mainArgs[0] = FOLDER_PATH+"supertest.decaf";
 		Decaf.main(mainArgs);
 	}
 	/*public static void main(String[] args) {

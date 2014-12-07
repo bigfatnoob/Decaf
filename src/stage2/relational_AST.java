@@ -21,5 +21,10 @@ class relational_AST extends SimpleNode {
   public Object jjtAccept(DecafVisitor visitor, ScopeElement data) {
     return visitor.visitRelational(this, data);
   }
+
+public void cAccept(CodeGenerator codeGenerator, ScopeElement data,
+		String falsLab) {
+	codeGenerator.visitRelational(this, data, falsLab);
+}
 }
 /* JavaCC - OriginalChecksum=20e79bc8eef49187462588f7dc7c6fb0 (do not edit this line) */

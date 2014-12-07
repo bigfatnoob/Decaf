@@ -79,13 +79,15 @@ public class ClassUnit extends Unit {
 				}
 				if (formalArgSize != argSize) {
 					continue;
-				}
-				if (formalArgSize == 0) {
+				} else {
 					return method;
 				}
-				boolean validMethod = true;
+				/*boolean validMethod = true;
 				for (int i=0; i<formalArgSize; i++){
 					VariableUnit formalArg = (VariableUnit)formalArgs.get(i);
+					if (formalArg.getType() == null) {
+						return method;
+					}
 					if (! formalArg.getType().jjtGetValue().toString().equals(actualArgs.get(i).typeObj.name)) {
 						validMethod = false;
 						break;
@@ -93,7 +95,7 @@ public class ClassUnit extends Unit {
 				}
 				if (validMethod) {
 					return method;
-				}
+				}*/
 			}
 		}
 		

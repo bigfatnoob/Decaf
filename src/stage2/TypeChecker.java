@@ -40,7 +40,28 @@ public class TypeChecker implements DecafVisitor{
 		}
 		return null;
 	}
-
+	
+	@Override
+	public void visitClass(ClassUnit classUnit, ScopeElement data) {
+		Iterator<Unit> memberUnits = classUnit.getMembersAndMethods().listIterator();
+		Unit memberUnit = null;
+		MethodUnit methodUnit = null;
+		@SuppressWarnings("unused")
+		VariableUnit variableUnit = null;
+		while (memberUnits.hasNext()) {
+			memberUnit = memberUnits.next();
+			if (memberUnit instanceof VariableUnit) {			
+				variableUnit = (VariableUnit) memberUnit;
+				// Handled in jjt
+			} else {
+				methodUnit = (MethodUnit) memberUnit;
+				sf.enterNewScopeForUnit(methodUnit, MODE);
+				visitMethod(methodUnit, sf.getCurrentScope());
+				sf.exitLastScope(1);
+			}
+		}
+		
+	}
 	@Override
 	public Object visit(int_AST node, ScopeElement data) {
 		// Handled in jjt
@@ -116,6 +137,9 @@ public class TypeChecker implements DecafVisitor{
 		} else if (statement instanceof block_AST) {
 			block_AST stat = (block_AST) statement;
 			sf.enterNewScope(false, 1);
+			if (stat.getStatements() == null) {
+				stat = (block_AST) stat.children[0];
+			}
 			stat.jjtAccept(this, data);
 			sf.exitLastScope(1);
 		} else if (statement instanceof breakStat_AST) {
@@ -176,6 +200,9 @@ public class TypeChecker implements DecafVisitor{
 			decafError.numErrors++;
 			decafError.error("Expecting " +methodReturnType.name+ " return type", new Position(0, 0, 0, 0));
 		}
+		if (returnStmt == null) {
+			return null;
+		}
 		returnStmt.jjtAccept(this, data);
 		if (data.getScopeUnit().getUnit() instanceof MethodUnit){
 			if (!TypeEquality.eq(returnStmt.typeObj, methodReturnType, null)) {
@@ -208,7 +235,18 @@ public class TypeChecker implements DecafVisitor{
 
 	@Override
 	public Object visitVarDeclStat(varDeclStat_AST node, ScopeElement data) {
-		// DO Nothing
+		List<Unit> variables = node.variables;
+		for(Unit unit: variables) {
+			VariableUnit vUnit = (VariableUnit) unit;
+			if (vUnit.rhs != null) {
+				vUnit.rhs.jjtAccept(this, data);
+				if (!TypeEquality.eq(vUnit.getType().typeObj, vUnit.rhs.typeObj, null)) {
+					System.out.println("Error in declaration.");
+					decafError.numErrors++;
+					decafError.error("Rhs type invalid in declaration", new Position(0, 0, 0, 0));
+				}
+			}
+		}
 		return null;
 	}
 
@@ -285,7 +323,7 @@ public class TypeChecker implements DecafVisitor{
 			}
 		}
 		MethodUnit constructor = classUnit.getMethod(node.name, actualArgs);
-		if (constructor == null) {
+		if ((constructor == null) && (actualArgs != null)) {
 			decafError.numErrors++;
 			decafError.error("No Class name ", new Position(0, 0, 0, 0));
 		}
@@ -303,7 +341,7 @@ public class TypeChecker implements DecafVisitor{
 				actualArg.jjtAccept(this, data);
 			}
 		}
-		if (methodUnit.validateMethodCall(actualArgs)) {
+		if (!methodUnit.validateMethodCall(actualArgs)) {
 			decafError.numErrors++;
 			decafError.error("Invalid method call " + methodUnit.getName(), new Position(0, 0, 0, 0));
 		}
@@ -334,28 +372,6 @@ public class TypeChecker implements DecafVisitor{
 
 
 	@Override
-	public void visitClass(ClassUnit classUnit, ScopeElement data) {
-		Iterator<Unit> memberUnits = classUnit.getMembersAndMethods().listIterator();
-		Unit memberUnit = null;
-		MethodUnit methodUnit = null;
-		@SuppressWarnings("unused")
-		VariableUnit variableUnit = null;
-		while (memberUnits.hasNext()) {
-			memberUnit = memberUnits.next();
-			if (memberUnit instanceof VariableUnit) {			
-				variableUnit = (VariableUnit) memberUnit;
-				// Handled in jjt
-			} else {
-				methodUnit = (MethodUnit) memberUnit;
-				sf.enterNewScopeForUnit(methodUnit, MODE);
-				visitMethod(methodUnit, sf.getCurrentScope());
-				sf.exitLastScope(1);
-			}
-		}
-		
-	}
-
-	@Override
 	public void visitMethod(MethodUnit methodUnit, ScopeElement data) {
 		block_AST block =  methodUnit.getMethodBlock();
 		sf.enterNewScope(false, 1);
@@ -373,6 +389,9 @@ public class TypeChecker implements DecafVisitor{
 			if (! TypeEquality.eq(lhs.typeObj, rhs.typeObj, null)) {
 				decafError.numErrors++;
 				decafError.error("LHS and RHS needs to be of same type" , new Position(0, 0, 0, 0));
+			} else {
+				node.typeObj = new Type("boolean", false,0,false);
+				return null;
 			}
 		}
 		node.typeObj = lhs.typeObj;
@@ -389,9 +408,12 @@ public class TypeChecker implements DecafVisitor{
 			if (! TypeEquality.eq(lhs.typeObj, rhs.typeObj, new Type("int", false, 0, false))) {
 				decafError.numErrors++;
 				decafError.error("LHS and RHS needs to be of type integer" , new Position(0, 0, 0, 0));
-			}
+			} 
+			node.typeObj = new Type("boolean", false, 0, false);
+		} else {
+			node.typeObj = lhs.typeObj;
 		}
-		node.typeObj = lhs.typeObj;
+		
 		return null;
 	}
 
@@ -460,6 +482,9 @@ public class TypeChecker implements DecafVisitor{
 	public Object visitExpression(binaryExpression_AST node, ScopeElement data) {
 		andOperator_AST lhs = node.lhs;
 		binaryExpression_AST rhs = node.rhs;
+		if (lhs == null) {
+			return null;
+		}
 		lhs.jjtAccept(this, data);
 		if (rhs != null){
 			rhs.jjtAccept(this, data);
@@ -594,6 +619,7 @@ public class TypeChecker implements DecafVisitor{
 	@Override
 	public Object visitPrimaryExisting2(primaryExisiting2_AST node, ScopeElement data) {
 		ClassUnit classUnit =(ClassUnit)node.callerScope.getScopeUnit().getUnit();
+		
 		Unit unit;
 		if (node.isMethodCall) {
 			if (node.arguments != null) {
@@ -602,6 +628,9 @@ public class TypeChecker implements DecafVisitor{
 				}
 			}
 			unit = classUnit.getMethod(node.attribute, node.arguments);
+			if (unit == null) {
+				unit = classUnit.getSuperClass().getMethod(node.attribute, node.arguments);
+			}
 			node.typeObj = ((MethodUnit)unit).getReturnType().typeObj;
 		} else if (node.arrayExpression != null) {
 			node.arrayExpression.jjtAccept(this, data);

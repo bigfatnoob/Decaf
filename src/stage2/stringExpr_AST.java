@@ -19,5 +19,8 @@ class stringExpr_AST extends literal_AST {
   public Object jjtAccept(DecafVisitor visitor, ScopeElement data) {
     return visitor.visitStringExpr(this, data);
   }
+  public void cAccept(CodeGenerator codeGenerator, ScopeElement data) {
+	  codeGenerator.visitStringExpr(this, data);
+  }
 }
 /* JavaCC - OriginalChecksum=2e316aebf74bcbc6e3e1c60091a64d2f (do not edit this line) */

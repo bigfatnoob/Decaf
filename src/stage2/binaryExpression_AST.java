@@ -24,5 +24,10 @@ class binaryExpression_AST extends SimpleNode {
   public Object jjtAccept(DecafVisitor visitor, ScopeElement data) {
     return visitor.visitExpression(this, data);
   }
+
+	public void cAccept(CodeGenerator codeGenerator, ScopeElement data,
+			String outLab) {
+		codeGenerator.visitBinaryExpr(this, data, outLab);
+	}
 }
 /* JavaCC - OriginalChecksum=c6dcb3a965076f97bb9ba3630da89d0f (do not edit this line) */

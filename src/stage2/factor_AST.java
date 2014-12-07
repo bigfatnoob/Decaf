@@ -21,5 +21,10 @@ class factor_AST extends SimpleNode {
   public Object jjtAccept(DecafVisitor visitor, ScopeElement data) {
     return visitor.visitFactor(this, data);
   }
+
+public void cAccept(CodeGenerator codeGenerator, ScopeElement data,
+		String falsLbl) {
+	codeGenerator.visitFactor(this, data, falsLbl);
+}
 }
 /* JavaCC - OriginalChecksum=85bcef8420ee3dc5c9773513079bfc85 (do not edit this line) */

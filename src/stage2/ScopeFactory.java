@@ -42,6 +42,9 @@ public class ScopeFactory {
 	}
 	
 	public ScopeElement getCurrentScope(){
+		if (currentScope == null) {
+			currentScope = rootScope;
+		}
 		return currentScope;
 	}
 	
@@ -90,7 +93,7 @@ public class ScopeFactory {
 			} catch (Exception e) {
 				currentScope.doNotExit = true;
 				return currentScope.getScopeUnit();
-				//e.printStackTrace();
+				//
 			}
 		}
 		
@@ -100,6 +103,9 @@ public class ScopeFactory {
 	
 	
 	public ScopeUnit exitLastScope(int MODE) {
+		if (currentScope == null) {
+			return null;
+		}
 		if (currentScope.doNotExit){
 			currentScope.doNotExit = false;
 			return currentScope.getScopeUnit();
@@ -140,5 +146,11 @@ public class ScopeFactory {
 		return newScopeUnit; 
 	}
 	
-	
+	public Unit getMethodUnitForBlock(ScopeElement blockScope) {
+		ScopeElement thisScope = blockScope;
+		while (thisScope.isBlock()) {
+			thisScope = thisScope.getParent();
+		}
+		return thisScope.getScopeUnit().getUnit();
+	}
 }

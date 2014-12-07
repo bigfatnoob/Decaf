@@ -18,5 +18,10 @@ class returnStat_AST extends SimpleNode {
   public Object jjtAccept(DecafVisitor visitor, ScopeElement data) {
     return visitor.visitReturnStat(this, data);
   }
+
+public void cAccept(CodeGenerator codeGenerator, ScopeElement data,
+		String brkLbl, String contLbl, String nextLbl) {
+	codeGenerator.visitReturnStat(this, data, brkLbl, contLbl, nextLbl);
+}
 }
 /* JavaCC - OriginalChecksum=21a491b147986e9e90ef07c282a462d4 (do not edit this line) */

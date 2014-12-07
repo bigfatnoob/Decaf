@@ -27,5 +27,9 @@ public List<SimpleNode> getStatements() {
 public void setStatements(List<SimpleNode> statements) {
 	this.statements = statements;
 }
+
+public void cAccept(CodeGenerator codeGenerator, ScopeElement data, String brkLbl, String contLbl, String nextLbl) {
+	codeGenerator.visitBlock(this, data, brkLbl, contLbl, nextLbl);
+}
 }
 /* JavaCC - OriginalChecksum=d3d09de98787f3055a0a49be675822b6 (do not edit this line) */

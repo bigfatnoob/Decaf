@@ -20,5 +20,10 @@ class ifThenElseStat_AST extends SimpleNode {
   public Object jjtAccept(DecafVisitor visitor, ScopeElement data) {
     return visitor.visitIfThenElseStat(this, data);
   }
+
+public void cAccept(CodeGenerator codeGenerator, ScopeElement data, String brkLbl, String contLbl, String nextLbl) {
+	codeGenerator.visitIfThenElseStat(this, data, brkLbl, contLbl, nextLbl);
+	
+}
 }
 /* JavaCC - OriginalChecksum=09b486170d6899b1ce665c48eadba959 (do not edit this line) */

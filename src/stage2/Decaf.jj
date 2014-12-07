@@ -33,6 +33,7 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants/*@egen*/
   {
     Decaf parser;
     DecafVisitor visitor = new TypeChecker();
+    CodeGenerator codeGen = new CodeGenerator();
     ScopeFactory sf = ScopeFactory.getScopeFactory();
     if (args.length == 1) {
       try {
@@ -80,8 +81,14 @@ public class Decaf/*@bgen(jjtree)*/implements DecafTreeConstants/*@egen*/
       *TypeChecking
       */
       SYMBOL_TABLE.enterScope(true, 1);
-      
       visitor.visitStart_AST(start,sf.getCurrentScope());
+      SYMBOL_TABLE.exitScope(1);
+      sf.getCurrentScope().setKidLevel(0);
+	  /**
+	  *Code Generation
+	  */
+      SYMBOL_TABLE.enterScope(true, 1);
+      codeGen.visitStart(start, sf.getCurrentScope());
       SYMBOL_TABLE.exitScope(1);
       //start.dump(" -> ");
     }
@@ -304,17 +311,19 @@ Unit Class():
         } else {
             IntegerMuted intBaseMuted = new IntegerMuted(-1);
 		    classUnit = (ClassUnit) SYMBOL_TABLE.lookUp(className, UnitType.CLASS, intBaseMuted);
-		    if (superClassName != null) {
-		      IntegerMuted intMuted = new IntegerMuted(-1);
-		      superClassUnit = (ClassUnit)SYMBOL_TABLE.lookUp(superClassName, UnitType.CLASS, intMuted);
-		      if (superClassUnit == null){
-		        throw new ParseException("Super class " + superClassName + " has not been declared.");		      }
-		      classUnit.setSuperClass(superClassUnit);		    }
+		    if (superClassName == null) {
+		      superClassName = "Object";		    }
+		    IntegerMuted intMuted = new IntegerMuted(-1);
+	      	superClassUnit = (ClassUnit)SYMBOL_TABLE.lookUp(superClassName, UnitType.CLASS, intMuted);
+	      	if (superClassUnit == null){
+	        	throw new ParseException("Super class " + superClassName + " has not been declared.");
+	      	}
+	     	classUnit.setSuperClass(superClassUnit);
         }
     }
     <LCB>
     {SYMBOL_TABLE.enterScopeForUnit(classUnit,MODE);}
-    (classFields = Member(){
+    (classFields = Member(classUnit){
         /*
         for (Unit memberUnit: classFields) {
           for (Unit existingUnit : classFieldsCollection) {
@@ -331,7 +340,7 @@ Unit Class():
       return classUnit;    }
 }
 
-List<Unit> Member():
+List<Unit> Member(ClassUnit classUnit):
 {
   Unit member = null;
   List<Unit> memberList = null;
@@ -339,18 +348,18 @@ List<Unit> Member():
 }
 {
   LOOKAHEAD(10)
-  memberList = Field(){allMembers.addAll(memberList); return allMembers;}
+  memberList = Field(classUnit){allMembers.addAll(memberList); return allMembers;}
   |LOOKAHEAD(10)
-  member = Method(){allMembers.add(member); return allMembers;}
+  member = Method(classUnit){allMembers.add(member); return allMembers;}
   |LOOKAHEAD(10)
-  member = Ctor(){
+  member = Ctor(classUnit){
     MethodUnit cMember = (MethodUnit)member;
     cMember.setConstructor(true);
     allMembers.add(cMember); return allMembers;
   }
 }
 
-List<Unit> Field():
+List<Unit> Field(ClassUnit classUnit):
 {
   FieldDetails fieldDetails = new FieldDetails();
   Modifier modifier = null;
@@ -362,6 +371,7 @@ List<Unit> Field():
   {
     for(Unit fieldUnit: fieldList){
       VariableUnit vUnit = (VariableUnit) fieldUnit;
+      vUnit.classUnit = classUnit;
       vUnit.setLocalVariable(true);    }
     return fieldList;
   }
@@ -519,6 +529,7 @@ List<Unit> Variables(FieldDetails fieldDetails):{
 Unit Variable(FieldDetails fieldDetails):{
   VariableUnit variable;
   String variableName = null;
+  binaryExpression_AST expr = null;
 }
 {
   variableName = ID(){
@@ -528,21 +539,8 @@ Unit Variable(FieldDetails fieldDetails):{
         variable = (VariableUnit)SYMBOL_TABLE.lookUp(variableName, UnitType.VARIABLE, intMuted);    }
   }
   (<LSB><RSB>{variable.setArray(true);})*
-  (/*@bgen(jjtree) assignOperator_AST */
-   {
-     assignOperator_AST jjtn001 = new assignOperator_AST(JJTASSIGNOPERATOR_AST);
-     boolean jjtc001 = true;
-     jjtree.openNodeScope(jjtn001);
-   }
-   try {
-/*@egen*/<ASSIGN>/*@bgen(jjtree)*/
-   } finally {
-     if (jjtc001) {
-       jjtree.closeNodeScope(jjtn001, true);
-     }
-   }
-/*@egen*/                     Expression()
-    // TODO -- Store value of variable
+  (<ASSIGN>
+  	expr = Expression()
   )?
   {
     if (MODE == 1) {
@@ -550,12 +548,13 @@ Unit Variable(FieldDetails fieldDetails):{
 	    variable.setModifier(fieldDetails.getModifier());
 	    variable.setArray(fieldDetails.isArray);
 	    variable.setArraySize(fieldDetails.arraySize);
+	    variable.rhs = expr;
     }
     return variable; 
   }
 }
 
-Unit Method():{
+Unit Method(ClassUnit classUnit):{
   MethodUnit methodUnit = new MethodUnit();
   Modifier modifier = null;
   SimpleNode type = null;
@@ -597,7 +596,8 @@ Unit Method():{
    }
    methodUnit.setModifier(modifier);
    methodUnit.setName(functionName);
-   methodUnit.setReturnType(type);  }
+   methodUnit.setReturnType(type);
+   methodUnit.classUnit = classUnit;  }
   <LP>
   { 
     SYMBOL_TABLE.enterScopeForUnit(methodUnit, MODE);  }
@@ -607,15 +607,16 @@ Unit Method():{
     }
    })?
   <RP>
+  block = Block()
   {
     SYMBOL_TABLE.exitScope(MODE);
   }
-  block = Block()  {
+    {
     methodUnit.setMethodBlock((block_AST)block);      }
   {return methodUnit;}
 }
 
-Unit Ctor():{
+Unit Ctor(ClassUnit classUnit):{
   MethodUnit methodUnit = new MethodUnit();
   Modifier modifier = null;
   List<Unit> formalArgs = null;
@@ -625,7 +626,7 @@ Unit Ctor():{
   block_AST block = null;
 }
 {
-  modifier = Modifier(){methodUnit.setModifier(modifier);}
+  modifier = Modifier()
   functionName = ID()/*@bgen(jjtree) id_AST */
   {
     id_AST jjtn001 = new id_AST(JJTID_AST);
@@ -660,6 +661,8 @@ Unit Ctor():{
     type.typeObj.name = functionName;
     type.typeObj.isClass = true;
     methodUnit.setReturnType(type);
+    methodUnit.classUnit = classUnit;
+    methodUnit.setModifier(modifier);
     SYMBOL_TABLE.enterScopeForUnit(methodUnit,MODE);
   }
   (formalArgs = FormalArgs(){
@@ -668,10 +671,11 @@ Unit Ctor():{
     }
    })?
   <RP>
+  block = Block()
   {
     SYMBOL_TABLE.exitScope(MODE);
   }
-  block = Block()
+  //block = Block()
   {
     methodUnit.setMethodBlock((block_AST)block);    
   }
@@ -928,6 +932,8 @@ SimpleNode Statement():{
                                                                      jjtc005 = false;
                                                                    }
 /*@egen*/ {
+    if (MODE == 0)    {
+    	SYMBOL_TABLE.addVariablesToMethod(variables);      }
     jjtn005.variables = variables;
     return jjtn005;
   })/*@bgen(jjtree)*/

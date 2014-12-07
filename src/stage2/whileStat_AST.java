@@ -19,5 +19,10 @@ class whileStat_AST extends SimpleNode {
   public Object jjtAccept(DecafVisitor visitor, ScopeElement data) {
     return visitor.visitWhileStat(this, data);
   }
+
+public void cAccept(CodeGenerator codeGenerator, ScopeElement data,
+		String brkLbl, String contLbl, String nextLbl) {
+	codeGenerator.visitWhileStat(this, data, brkLbl, contLbl, nextLbl);
+}
 }
 /* JavaCC - OriginalChecksum=bde3061e834ce3f3b7adacd770a6fce8 (do not edit this line) */

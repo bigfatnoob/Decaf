@@ -6,10 +6,12 @@ public
 class voidType_AST extends SimpleNode {
   public voidType_AST(int id) {
     super(id);
+    this.typeObj = new Type("void",false,0,false);
   }
 
   public voidType_AST(Decaf p, int id) {
     super(p, id);
+    this.typeObj = new Type("void",false,0,false);
   }
 
 

@@ -20,5 +20,10 @@ class varDeclStat_AST extends SimpleNode {
   public Object jjtAccept(DecafVisitor visitor, ScopeElement data) {
     return visitor.visitVarDeclStat(this, data);
   }
+
+public void cAccept(CodeGenerator codeGenerator, ScopeElement data,
+		String brkLbl, String contLbl, String nextLbl) {
+	codeGenerator.visitVarDecl(this, data, brkLbl, contLbl, nextLbl);
+}
 }
 /* JavaCC - OriginalChecksum=8ec26b5dc58077564d238ade9ecbfd69 (do not edit this line) */

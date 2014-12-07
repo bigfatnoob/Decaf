@@ -11,7 +11,7 @@ class primaryExisiting2_AST extends SimpleNode {
   binaryExpression_AST arrayExpression = null;
   primaryExisiting2_AST p2;
   ScopeElement callerScope;
-  boolean isMethodCall = true;
+  boolean isMethodCall = false;
   
   
   public primaryExisiting2_AST(int id) {

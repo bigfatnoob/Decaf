@@ -19,5 +19,9 @@ class charExpr_AST extends literal_AST {
   public Object jjtAccept(DecafVisitor visitor, ScopeElement data) {
     return visitor.visitCharExpr(this, data);
   }
+  
+  public void cAccept(CodeGenerator codeGenerator, ScopeElement data) {
+	  codeGenerator.visitCharExpr(this, data);
+  }
 }
 /* JavaCC - OriginalChecksum=c37acfe7c3fba94c61cb8b5d2f0bb958 (do not edit this line) */

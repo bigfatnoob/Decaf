@@ -19,5 +19,9 @@ class methodCall_AST extends SimpleNode {
   public Object jjtAccept(DecafVisitor visitor, ScopeElement data) {
     return visitor.visitMethodCall(this, data);
   }
+
+	public void cAccept(CodeGenerator codeGenerator, ScopeElement data) {
+		codeGenerator.visitMethodCall(this, data);
+	}
 }
 /* JavaCC - OriginalChecksum=19faec5d748559445af56c0159a273ee (do not edit this line) */

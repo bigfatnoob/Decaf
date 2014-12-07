@@ -9,22 +9,22 @@ public interface DecafTreeConstants
   public int JJTCHAR_AST = 3;
   public int JJTBOOLEAN_AST = 4;
   public int JJTID_AST = 5;
-  public int JJTASSIGNOPERATOR_AST = 6;
-  public int JJTVOIDTYPE_AST = 7;
-  public int JJTBLOCK_AST = 8;
-  public int JJTIFTHENELSESTAT_AST = 9;
-  public int JJTWHILESTAT_AST = 10;
-  public int JJTRETURNSTAT_AST = 11;
-  public int JJTEXPRESSIONSTAT_AST = 12;
-  public int JJTVARDECLSTAT_AST = 13;
-  public int JJTBREAKSTAT_AST = 14;
-  public int JJTCONTINUESTAT_AST = 15;
-  public int JJTEMPTYSTAT_AST = 16;
-  public int JJTNULLEXPR_AST = 17;
-  public int JJTBOOLEXPR_AST = 18;
-  public int JJTINTEXPR_AST = 19;
-  public int JJTCHAREXPR_AST = 20;
-  public int JJTSTRINGEXPR_AST = 21;
+  public int JJTVOIDTYPE_AST = 6;
+  public int JJTBLOCK_AST = 7;
+  public int JJTIFTHENELSESTAT_AST = 8;
+  public int JJTWHILESTAT_AST = 9;
+  public int JJTRETURNSTAT_AST = 10;
+  public int JJTEXPRESSIONSTAT_AST = 11;
+  public int JJTVARDECLSTAT_AST = 12;
+  public int JJTBREAKSTAT_AST = 13;
+  public int JJTCONTINUESTAT_AST = 14;
+  public int JJTEMPTYSTAT_AST = 15;
+  public int JJTNULLEXPR_AST = 16;
+  public int JJTBOOLEXPR_AST = 17;
+  public int JJTINTEXPR_AST = 18;
+  public int JJTCHAREXPR_AST = 19;
+  public int JJTSTRINGEXPR_AST = 20;
+  public int JJTASSIGNOPERATOR_AST = 21;
   public int JJTFIELDACCESS_AST = 22;
   public int JJTFIELDEXPR_AST = 23;
   public int JJTARRAYEXPR_AST = 24;
@@ -59,7 +59,6 @@ public interface DecafTreeConstants
     "char_AST",
     "boolean_AST",
     "id_AST",
-    "assignOperator_AST",
     "voidType_AST",
     "block_AST",
     "ifThenElseStat_AST",
@@ -75,6 +74,7 @@ public interface DecafTreeConstants
     "intExpr_AST",
     "charExpr_AST",
     "stringExpr_AST",
+    "assignOperator_AST",
     "fieldAccess_AST",
     "fieldExpr_AST",
     "arrayExpr_AST",
@@ -102,4 +102,4 @@ public interface DecafTreeConstants
     "newArray_AST",
   };
 }
-/* JavaCC - OriginalChecksum=c8c8529e36fe64304f308d2a979cec9e (do not edit this line) */
+/* JavaCC - OriginalChecksum=6a70c4af5c2d294d6260953e32ee71c0 (do not edit this line) */

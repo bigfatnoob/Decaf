@@ -3,6 +3,7 @@
  */
 package stage2;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -26,6 +27,10 @@ public class MethodUnit extends Unit {
 	 * All Statements in the function
 	 */
 	private List<SimpleNode> statements;
+	
+	ClassUnit classUnit;
+	
+	List<Unit> localVariables = new ArrayList<Unit>();
 	
 	private boolean isFormalArgument;
 	
@@ -51,6 +56,7 @@ public class MethodUnit extends Unit {
 		return formalArgs;
 	}
 	public void setFormalArgs(List<Unit> formalArgs) {
+		localVariables.addAll(formalArgs);
 		this.formalArgs = formalArgs;
 	}
 	public List<SimpleNode> getStatements() {
@@ -102,12 +108,17 @@ public class MethodUnit extends Unit {
 		boolean validMethod = true;
 		for (int i=0; i<formalArgSize; i++){
 			VariableUnit formalArg = (VariableUnit)formalArgs.get(i);
-			if (! formalArg.getType().jjtGetValue().toString().equals(actualArgs.get(i).type)) {
-				validMethod = false;
-				break;
+			try {
+				if (! formalArg.getType().typeObj.name.equals(actualArgs.get(i).typeObj.name)) {
+					validMethod = false;
+					break;
+				}
+			} catch (Exception e) {
+				return true;
 			}
+			
 		}
 		return validMethod;
 	}
-	
+
 }

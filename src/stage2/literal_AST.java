@@ -17,5 +17,9 @@ class literal_AST extends SimpleNode {
   public Object jjtAccept(DecafVisitor visitor, ScopeElement data) {
     return visitor.visitLiteral(this, data);
   }
+
+public void cAccept(CodeGenerator codeGenerator, ScopeElement data) {
+	codeGenerator.visitLiteral(this, data);
+}
 }
 /* JavaCC - OriginalChecksum=cc916afe2d893d4fb9bc855a7d26887f (do not edit this line) */

@@ -24,6 +24,9 @@ public class VariableUnit extends Unit {
 	private boolean isFormalArgument;
 	
 	private boolean isLocalVariable;
+	ClassUnit classUnit;
+	
+	binaryExpression_AST rhs;
 	
 	public SimpleNode getType() {
 		return type;

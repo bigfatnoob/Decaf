@@ -19,5 +19,9 @@ class primaryExisting_AST extends SimpleNode {
   public Object jjtAccept(DecafVisitor visitor, ScopeElement data) {
     return visitor.visitPrimaryExisting(this, data);
   }
+
+public void cAccept(CodeGenerator codeGenerator, ScopeElement data) {
+	codeGenerator.visitPrimary(this, data);
+}
 }
 /* JavaCC - OriginalChecksum=007e0f262e1ca4d56fffc2f171deae34 (do not edit this line) */

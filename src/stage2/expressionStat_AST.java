@@ -18,5 +18,10 @@ class expressionStat_AST extends SimpleNode {
   public Object jjtAccept(DecafVisitor visitor, ScopeElement data) {
     return visitor.visitExpressionStat(this, data);
   }
+  
+  public void cAccept(CodeGenerator codeGenerator, ScopeElement data,
+			String brkLbl, String contLbl, String nextLbl) {
+		codeGenerator.visitExpressionStat(this, data, brkLbl, contLbl, nextLbl);
+	}
 }
 /* JavaCC - OriginalChecksum=8bb16d28119f00207c7fb6dd9d278765 (do not edit this line) */

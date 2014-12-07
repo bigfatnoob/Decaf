@@ -19,5 +19,10 @@ class nullExpr_AST extends literal_AST {
   public Object jjtAccept(DecafVisitor visitor, ScopeElement data) {
     return visitor.visitNullExpr(this, data);
   }
+  
+  public void cAccept(CodeGenerator codeGenerator, ScopeElement data) {
+	  codeGenerator.visitNullExpr(this, data);
+  }
+
 }
 /* JavaCC - OriginalChecksum=83605f2da692ae386936504f4b20751f (do not edit this line) */

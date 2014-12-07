@@ -21,5 +21,9 @@ class newArray_AST extends SimpleNode {
   public Object jjtAccept(DecafVisitor visitor, ScopeElement data) {
     return visitor.visitNewArray(this, data);
   }
+
+public void cAccept(CodeGenerator codeGenerator, ScopeElement data) {
+	codeGenerator.visitNewArray(this, data);
+}
 }
 /* JavaCC - OriginalChecksum=413daaf6dd66a8b29ef89caef7d51711 (do not edit this line) */

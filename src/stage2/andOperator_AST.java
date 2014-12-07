@@ -20,5 +20,11 @@ class andOperator_AST extends SimpleNode {
   public Object jjtAccept(DecafVisitor visitor, ScopeElement data) {
     return visitor.visitAndOperator(this, data);
   }
+
+public void cAccept(CodeGenerator codeGenerator, ScopeElement data,
+		String falsLbl) {
+	codeGenerator.visitAndOpertor(this, data, falsLbl);
+	
+}
 }
 /* JavaCC - OriginalChecksum=38255a6e0517addf2c237aaa75644cab (do not edit this line) */

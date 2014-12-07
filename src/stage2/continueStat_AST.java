@@ -17,5 +17,10 @@ class continueStat_AST extends SimpleNode {
   public Object jjtAccept(DecafVisitor visitor, ScopeElement data) {
     return visitor.visit(this, data);
   }
+
+public void cAccept(CodeGenerator codeGenerator, ScopeElement data,
+		String brkLbl, String contLbl, String nextLbl) {
+	codeGenerator.visitCont(this, data, brkLbl, contLbl, nextLbl);
+}
 }
 /* JavaCC - OriginalChecksum=178616f473046d808ad69a29d40942ed (do not edit this line) */

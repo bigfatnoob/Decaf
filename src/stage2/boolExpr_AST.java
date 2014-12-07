@@ -19,5 +19,8 @@ class boolExpr_AST extends literal_AST {
   public Object jjtAccept(DecafVisitor visitor, ScopeElement data) {
     return visitor.visitBoolExpr(this, data);
   }
+  public void cAccept(CodeGenerator codeGenerator, ScopeElement data) {
+	  codeGenerator.visitNullExpr(this, data);
+  }
 }
 /* JavaCC - OriginalChecksum=8798bcfa6173387f0b48bef19f8b6871 (do not edit this line) */

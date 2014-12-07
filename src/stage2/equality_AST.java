@@ -21,5 +21,11 @@ class equality_AST extends SimpleNode {
   public Object jjtAccept(DecafVisitor visitor, ScopeElement data) {
     return visitor.visitEquality(this, data);
   }
+
+public void cAccept(CodeGenerator codeGenerator, ScopeElement data,
+		String falsLab) {
+	codeGenerator.visitEquality(this, data, falsLab);
+	
+}
 }
 /* JavaCC - OriginalChecksum=7427cfae9abeaca294bb9cf7cba87f3a (do not edit this line) */

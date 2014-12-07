@@ -21,5 +21,10 @@ class unary_AST extends SimpleNode {
   public Object jjtAccept(DecafVisitor visitor, ScopeElement data) {
     return visitor.visitUnary(this, data);
   }
+
+public void cAccept(CodeGenerator codeGenerator, ScopeElement data,
+		String falsLbl) {
+	codeGenerator.visitUnary(this,data, falsLbl);
+}
 }
 /* JavaCC - OriginalChecksum=cb7fb0bfe7a862a49c0012cc66ce167d (do not edit this line) */
